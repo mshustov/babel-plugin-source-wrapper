@@ -94,7 +94,9 @@ module.exports = function(options){
             visitor: {
                 FunctionDeclaration: function(node, parent, scope, file){
                     var loc = getLocation(file, node);
-                    this.insertAfter(wrapNodeReference(loc, node.id.name));
+                    var node = wrapNodeReference(loc, node.id.name);
+                    node.skip_ = true;
+                    this.insertAfter(node);
                 },
 
                 FunctionExpression: {
@@ -113,11 +115,18 @@ module.exports = function(options){
                     }
                 },
 
+                shouldSkip: function(path){
+                    return path.node.skip_;
+                },
+
                 ObjectExpression: {
+                    enter: function(node, parent, scope, file){
+                        this.setData('map', buildMap(node, getLocation.bind(null, file)));
+                    },
                     exit: function(node, parent, scope, file){
                         this.skip();
                         var loc = getLocation(file, node);
-                        var map = buildMap(node, getLocation.bind(null, file));
+                        var map = this.getData('map');
                         return wrapObjectNode(loc, node, map);
                     }
                 }
