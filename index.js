@@ -92,6 +92,10 @@ module.exports = function(options){
         return new Plugin('babel-plugin-source-wrapper', {
             metadata: { secondPass: false },
             visitor: {
+                shouldSkip: function(path){
+                    return path.node.skip_;
+                },
+                
                 FunctionDeclaration: function(node, parent, scope, file){
                     var loc = getLocation(file, node);
                     var node = wrapNodeReference(loc, node.id.name);
@@ -99,24 +103,12 @@ module.exports = function(options){
                     this.insertAfter(node);
                 },
 
-                FunctionExpression: {
+                'FunctionExpression|ArrowFunctionExpression|ClassExpression|NewExpression': {
                     exit: function(node, parent, scope, file){
                         this.skip();
                         var loc = getLocation(file, node);
                         return wrapNode(loc, node);
                     }
-                },
-
-                NewExpression: {
-                    exit: function(node, parent, scope, file){
-                        this.skip();
-                        var loc = getLocation(file, node);
-                        return wrapNode(loc, node);
-                    }
-                },
-
-                shouldSkip: function(path){
-                    return path.node.skip_;
                 },
 
                 ObjectExpression: {
