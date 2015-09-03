@@ -4,13 +4,18 @@ var chalk = require('chalk');
 var clear = require('clear');
 var diff = require('diff');
 var fs = require('fs');
+var path = require('path');
 
 require('babel/register');
 
-var expectedPath = __dirname + '/fixtures/expected.js';
-var actualPath = __dirname + '/fixtures/actual.js';
+var expectedPath = normalizeFilename(__dirname + '/fixtures/expected.js');
+var actualPath = normalizeFilename(__dirname + '/fixtures/actual.js');
 
 var pluginPath = require.resolve('../index.js');
+
+function normalizeFilename(filename){
+    return path.normalize(filename).replace(/\\/g, '/');
+}
 
 function normalizeLines(str) {
     return str.trimRight().replace(/\r\n/g, '\n');
@@ -29,7 +34,7 @@ function runTest() {
         ]
     });
 
-    var expected = fs.readFileSync(expectedPath, 'utf-8').toString().replace(/\{\{(.*)\}\}/g, actualPath);
+    var expected = fs.readFileSync(expectedPath, 'utf-8').replace(/\{\{(.*)\}\}/g, actualPath);
 
     diff.diffLines(
         normalizeLines(output.code),
@@ -41,6 +46,8 @@ function runTest() {
                 value = chalk.green(part.value);
             } else if (part.removed) {
                 value = chalk.red(part.value);
+            } else {
+                return;
             }
 
             process.stdout.write(value);

@@ -21,13 +21,13 @@ var obj = loc_h8tz9yd7f1zl4t3711yc({
     getCtx: loc_h8tz9yd7f1zl4t3711yc(function () {
         return this;
     }, {
-        loc: "/Users/mshustov/work/babel-plugin-source-wrapper/test/fixtures/actual.js:8:13:10:6",
+        loc: "{{path}}:8:13:10:6",
         blackbox: true
     }),
     getOne: loc_h8tz9yd7f1zl4t3711yc(function () {
         return this.one;
     }, {
-        loc: "/Users/mshustov/work/babel-plugin-source-wrapper/test/fixtures/actual.js:11:13:13:6",
+        loc: "{{path}}:11:13:13:6",
         blackbox: true
     })
 }, {

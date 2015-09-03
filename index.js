@@ -4,18 +4,18 @@ module.exports = function(options){
     var registratorName = options.registratorName;
     var blacklistArray = options.blacklist;
     var Minimatch = require("minimatch").Minimatch;
-    var blacklistMM = null;
+    var blacklist = null;
 
-    if(blacklistArray){
-        blacklistMM = blacklistArray.map(function(str) {
+    if (blacklistArray) {
+        blacklist = blacklistArray.map(function(str){
             return new Minimatch(str, { /* options */ });
-        })
+        });
     }
 
     function inBlackList(filename){
-        return blacklistMM && blacklistMM.some(function(mm) {
+        return blacklist && blacklist.some(function(mm){
             return mm.match(filename);
-        })
+        });
     }
 
     function calcLocation(file, node){
@@ -33,9 +33,6 @@ module.exports = function(options){
         var t = _ref.types;
 
         function getLocation(file, node){
-            if(!file || !file.opts.filename){
-                debugger;
-            }
             if (node.loc) {
                 return calcLocation(file, node);
             }
@@ -55,61 +52,41 @@ module.exports = function(options){
             return dest;
         }
 
+        function createInfoObject(loc, isBlackbox, extra){
+            return t.objectExpression([
+                t.property(
+                    'init',
+                    t.identifier('loc'),
+                    t.literal(loc)
+                ),
+                t.property(
+                    'init',
+                    t.identifier('blackbox'),
+                    t.literal(isBlackbox)
+                )
+            ].concat(extra || []));
+        }
+
         function wrapNodeReference(loc, name, isBlackbox){
             return t.expressionStatement(
                 t.callExpression(t.identifier(registratorName), [
                     t.identifier(name),
-                    t.objectExpression([
-                        t.property(
-                            'init',
-                            t.identifier('loc'),
-                            t.literal(loc)
-                        ),
-                        t.property(
-                            'init',
-                            t.identifier('blackbox'),
-                            t.literal(isBlackbox)
-                        )
-                    ])
+                    createInfoObject(loc, isBlackbox)
                 ])
             );
         }
 
-        //TODO fix API
         function wrapNode(loc, node, isBlackbox){
-            return t.callExpression(
-                t.identifier(registratorName),
-                [
-                    node,
-                    t.objectExpression([
-                        t.property(
-                            'init',
-                            t.identifier('loc'),
-                            t.literal(loc)
-                        ),
-                        t.property(
-                            'init',
-                            t.identifier('blackbox'),
-                            t.literal(isBlackbox)
-                        )
-                    ])
-                ]);
+            return t.callExpression(t.identifier(registratorName), [
+                node,
+                createInfoObject(loc, isBlackbox)
+            ]);
         }
 
         function wrapObjectNode(loc, node, isBlackbox, map){
             return t.callExpression(t.identifier(registratorName), [
                 node,
-                t.objectExpression([
-                    t.property(
-                        'init',
-                        t.identifier('loc'),
-                        t.literal(loc)
-                    ),
-                    t.property(
-                        'init',
-                        t.identifier('blackbox'),
-                        t.literal(isBlackbox)
-                    ),
+                createInfoObject(loc, isBlackbox, [
                     t.property(
                         'init',
                         t.identifier('map'),
@@ -133,6 +110,7 @@ module.exports = function(options){
                         )
                     );
                 }
+
                 return result;
             }, []);
         }
@@ -146,14 +124,13 @@ module.exports = function(options){
                 
                 FunctionDeclaration: function(node, parent, scope, file){
                     var loc = getLocation(file, node);
-                    //var node = wrapNodeReference(loc, node.id.name);
+                    var node = wrapNodeReference(loc, node.id.name, inBlackList(file.opts.filename));
                     node.skip_ = true;
-                    this.insertAfter(wrapNodeReference(loc, node.id.name, inBlackList(file.opts.filename)));
+                    this.insertAfter(node);
 
                 },
 
                 'FunctionExpression|ArrowFunctionExpression|ClassExpression|NewExpression|ArrayExpression': {
-                // FIXME keep function name
                     exit: function(node, parent, scope, file){
                         this.skip();
                         var loc = getLocation(file, node);
@@ -168,10 +145,8 @@ module.exports = function(options){
                     exit: function(node, parent, scope, file){
                         this.skip();
                         var loc = getLocation(file, node);
-                        if (loc) { // FIXME
-                            var map = this.getData('map');
-                            return wrapObjectNode(loc, node, inBlackList(file.opts.filename), map);
-                        }
+                        var map = this.getData('map');
+                        return wrapObjectNode(loc, node, inBlackList(file.opts.filename), map);
                     }
                 },
                 CallExpression: {
