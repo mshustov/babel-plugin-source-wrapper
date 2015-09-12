@@ -1,19 +1,30 @@
-'use strict';
+var Minimatch = require('minimatch').Minimatch;
 
 module.exports = function(options){
     var registratorName = options.registratorName;
-    var blacklistArray = options.blacklist;
-    var Minimatch = require("minimatch").Minimatch;
-    var blacklist = null;
+    var blackbox = false;
 
-    if (blacklistArray) {
-        blacklist = blacklistArray.map(function(str){
-            return new Minimatch(str, { /* options */ });
+    if ('blackbox' in options === false) {
+        blackbox = [
+            '/bower_compontents/**',
+            '/node_modules/**'
+        ];
+    } else {
+        if (Array.isArray(options.blackbox)) {
+            blackbox = options.blackbox;
+        } else {
+            console.warn('[' + require('./package.json').name + '] Wrong value for blackbox option');
+        }
+    }
+
+    if (Array.isArray(blackbox)) {
+        blackbox = blackbox.map(function(str){
+            return new Minimatch(str);
         });
     }
 
-    function inBlackList(filename){
-        return blacklist && blacklist.some(function(mm){
+    function isBlackbox(filename){
+        return blackbox && blackbox.some(function(mm){
             return mm.match(filename);
         });
     }
@@ -53,18 +64,29 @@ module.exports = function(options){
         }
 
         function createInfoObject(loc, isBlackbox, extra){
-            return t.objectExpression([
-                t.property(
+            var properties = [];
+
+            if (loc) {
+                properties.push(t.property(
                     'init',
                     t.identifier('loc'),
                     t.literal(loc)
-                ),
-                t.property(
+                ));
+            }
+
+            if (isBlackbox) {
+                properties.push(t.property(
                     'init',
                     t.identifier('blackbox'),
-                    t.literal(isBlackbox)
-                )
-            ].concat(extra || []));
+                    t.literal(true)
+                ));
+            }
+
+            if (extra) {
+                properties = properties.concat(extra);
+            }
+
+            return t.objectExpression(properties);
         }
 
         function wrapNodeReference(loc, name, isBlackbox){
@@ -121,20 +143,19 @@ module.exports = function(options){
                 shouldSkip: function(path){
                     return path.node.skip_;
                 },
-                
+
                 FunctionDeclaration: function(node, parent, scope, file){
                     var loc = getLocation(file, node);
-                    var node = wrapNodeReference(loc, node.id.name, inBlackList(file.opts.filename));
+                    var node = wrapNodeReference(loc, node.id.name, isBlackbox(file.opts.filename));
                     node.skip_ = true;
                     this.insertAfter(node);
-
                 },
 
-                'FunctionExpression|ArrowFunctionExpression|ClassExpression|NewExpression|ArrayExpression': {
+                'FunctionExpression|ArrowFunctionExpression|ClassExpression|NewExpression|ArrayExpression|JSXElement': {
                     exit: function(node, parent, scope, file){
                         this.skip();
                         var loc = getLocation(file, node);
-                        return wrapNode(loc, node, inBlackList(file.opts.filename));
+                        return wrapNode(loc, node, isBlackbox(file.opts.filename));
                     }
                 },
 
@@ -146,7 +167,7 @@ module.exports = function(options){
                         this.skip();
                         var loc = getLocation(file, node);
                         var map = this.getData('map');
-                        return wrapObjectNode(loc, node, inBlackList(file.opts.filename), map);
+                        return wrapObjectNode(loc, node, isBlackbox(file.opts.filename), map);
                     }
                 },
                 CallExpression: {
@@ -155,11 +176,10 @@ module.exports = function(options){
 
                         if (t.isMemberExpression(node.callee) && !node.callee.computed){
                             var loc = getLocation(file, node);
-                            return wrapNode(loc, node, inBlackList(file.opts.filename));
+                            return wrapNode(loc, node, isBlackbox(file.opts.filename));
                         }
                     }
                 }
-
             }
         });
     };
