@@ -29,7 +29,7 @@ function runTest() {
         plugins: [
             require(pluginPath)({
                 "registratorName": "loc_h8tz9yd7f1zl4t3711yc",
-                "blacklist": ["**/fixtures/**"]
+                "blackbox": ["**/fixtures/**"]
             })
         ]
     });
