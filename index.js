@@ -4,7 +4,7 @@ module.exports = function(options){
     var registratorName = options.registratorName;
     var blackbox = false;
 
-    if ('blackbox' in options === false) {
+    if ('blackbox' in options === false || options.blackbox == null) {
         blackbox = [
             '/bower_compontents/**',
             '/node_modules/**'
@@ -13,7 +13,9 @@ module.exports = function(options){
         if (Array.isArray(options.blackbox)) {
             blackbox = options.blackbox;
         } else {
-            console.warn('[' + require('./package.json').name + '] Wrong value for blackbox option');
+            if (blackbox !== false) {
+                console.warn('[' + require('./package.json').name + '] Wrong value for blackbox option');
+            }
         }
     }
 
