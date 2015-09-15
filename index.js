@@ -4,7 +4,7 @@ module.exports = function(options){
     var registratorName = options.registratorName;
     var blackbox = false;
 
-    if ('blackbox' in options === false) {
+    if ('blackbox' in options === false || options.blackbox == null) {
         blackbox = [
             '/bower_compontents/**',
             '/node_modules/**'
@@ -13,7 +13,9 @@ module.exports = function(options){
         if (Array.isArray(options.blackbox)) {
             blackbox = options.blackbox;
         } else {
-            console.warn('[' + require('./package.json').name + '] Wrong value for blackbox option');
+            if (blackbox !== false) {
+                console.warn('[' + require('./package.json').name + '] Wrong value for blackbox option');
+            }
         }
     }
 
@@ -98,11 +100,17 @@ module.exports = function(options){
             );
         }
 
-        function wrapNode(loc, node, isBlackbox){
-            return t.callExpression(t.identifier(registratorName), [
+        function wrapNode(loc, node, isBlackbox, force){
+            var args = [
                 node,
                 createInfoObject(loc, isBlackbox)
-            ]);
+            ];
+
+            if (force) {
+                args.push(t.literal(true));
+            }
+
+            return t.callExpression(t.identifier(registratorName), args);
         }
 
         function wrapObjectNode(loc, node, isBlackbox, map){
@@ -151,11 +159,19 @@ module.exports = function(options){
                     this.insertAfter(node);
                 },
 
-                'FunctionExpression|ArrowFunctionExpression|ClassExpression|NewExpression|ArrayExpression|JSXElement': {
+                'FunctionExpression|ArrowFunctionExpression|ClassExpression|ArrayExpression|JSXElement': {
                     exit: function(node, parent, scope, file){
                         this.skip();
                         var loc = getLocation(file, node);
                         return wrapNode(loc, node, isBlackbox(file.opts.filename));
+                    }
+                },
+
+                NewExpression:  {
+                    exit: function(node, parent, scope, file){
+                        this.skip();
+                        var loc = getLocation(file, node);
+                        return wrapNode(loc, node, isBlackbox(file.opts.filename), true);
                     }
                 },
 
