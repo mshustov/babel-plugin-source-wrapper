@@ -9,10 +9,12 @@
     "chalk": "^1.1.0",
     "clear": "0.0.1",
     "diff": "^1.4.0",
-    "watch": "^0.16.0"
+    "tap-spec": "^4.1.0",
+    "tape": "^4.0.0",
+    "watch": "^0.16.0",
+    "tap-difflet": "^0.3.0"
   },
   "scripts": {
-    "test": "node test",
-    "watch": "node test --watch"
+    "test": "node ./spec/index.js | tap-difflet"
   }
 }
