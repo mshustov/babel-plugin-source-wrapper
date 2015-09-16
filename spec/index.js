@@ -46,3 +46,23 @@ test('location wrapper', function (t) {
     });
     t.end();
 });
+
+test('Blackbox setter', function (t) {
+    var expectedPath = path.join(__dirname, 'fixtures', 'Blackbox', 'expected.js');
+    var sourcePath = path.join(__dirname, 'fixtures', 'Blackbox', 'source.js');
+
+    var expected = fs.readFileSync(expectedPath, 'utf-8').replace(/\{\{(.*)\}\}/g, sourcePath);
+    var output = babel.transformFileSync(sourcePath, {
+        sourceMaps: true,
+        optional: ['runtime'],
+        plugins: [
+            require(pluginPath)({
+                "registratorName": "testWrapper",
+                "blackbox": ['**/Blackbox/**']
+            })
+        ]
+    });
+
+    t.equal(expected, output.code);
+    t.end();
+});

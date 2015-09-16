@@ -9,3 +9,6 @@ var res = testWrapper(testWrapper(obj.getCtx(), {
 testWrapper(console.log(res), {
   loc: "{{path}}:3:1:3:17"
 });
+
+var a = obj.getCtx;
+var b = obj["getCtx"]();

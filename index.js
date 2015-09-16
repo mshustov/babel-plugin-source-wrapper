@@ -188,8 +188,7 @@ module.exports = function(options){
                 },
                 CallExpression: {
                     exit: function(node, parent, scope, file){
-                        //this.skip();
-
+                        // add to another test
                         if (t.isMemberExpression(node.callee) && !node.callee.computed){
                             var loc = getLocation(file, node);
                             return wrapNode(loc, node, isBlackbox(file.opts.filename));
