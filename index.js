@@ -161,6 +161,11 @@ module.exports = function(options){
 
                 'FunctionExpression|ArrowFunctionExpression|ClassExpression|ArrayExpression|JSXElement': {
                     exit: function(node, parent, scope, file){
+                        // don't wrap class constructor as Babel fail on super call check
+                        if (parent.type == 'MethodDefinition' && parent.key.name == 'constructor') {
+                            return;
+                        }
+
                         this.skip();
                         var loc = getLocation(file, node);
                         return wrapNode(loc, node, isBlackbox(file.opts.filename));
