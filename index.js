@@ -1,7 +1,9 @@
+var path = require('path');
 var Minimatch = require('minimatch').Minimatch;
 
 module.exports = function(options){
     var registratorName = options.registratorName;
+    var basePath = options.basePath || false;
     var blackbox = false;
 
     if ('blackbox' in options === false || options.blackbox == null) {
@@ -32,8 +34,20 @@ module.exports = function(options){
     }
 
     function calcLocation(file, node){
+        var filename = 'unknown';
+
+        if (file.opts.filename) {
+            filename = file.opts.filename;
+            if (basePath) {
+                var relativePath = path.relative(basePath, file.opts.filename);
+                if (relativePath[0] != '.') {
+                    filename = '/' + relativePath;
+                }
+            }
+        }
+
         return [
-            file.opts.filename || 'unknown',
+            filename,
             node.loc.start.line,
             node.loc.start.column + 1,
             node.loc.end.line,
