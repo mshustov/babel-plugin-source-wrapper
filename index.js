@@ -152,7 +152,7 @@ module.exports = function(options){
                     return path.node.skip_;
                 },
 
-                FunctionDeclaration: function(node, parent, scope, file){
+                'FunctionDeclaration|ClassDeclaration': function(node, parent, scope, file){
                     var loc = getLocation(file, node);
                     var node = wrapNodeReference(loc, node.id.name, isBlackbox(file.opts.filename));
                     node.skip_ = true;
@@ -161,6 +161,11 @@ module.exports = function(options){
 
                 'FunctionExpression|ArrowFunctionExpression|ClassExpression|ArrayExpression|JSXElement': {
                     exit: function(node, parent, scope, file){
+                        // don't wrap class constructor as Babel fail on super call check
+                        if (parent.type == 'MethodDefinition' && parent.key.name == 'constructor') {
+                            return;
+                        }
+
                         this.skip();
                         var loc = getLocation(file, node);
                         return wrapNode(loc, node, isBlackbox(file.opts.filename));
