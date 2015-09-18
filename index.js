@@ -152,7 +152,7 @@ module.exports = function(options){
                     return path.node.skip_;
                 },
 
-                FunctionDeclaration: function(node, parent, scope, file){
+                'FunctionDeclaration|ClassDeclaration': function(node, parent, scope, file){
                     var loc = getLocation(file, node);
                     var node = wrapNodeReference(loc, node.id.name, isBlackbox(file.opts.filename));
                     node.skip_ = true;
