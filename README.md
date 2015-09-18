@@ -27,8 +27,8 @@ var sum = function(a) {
 Result:
 
 ```js
-var sum = testWrapper(function (a) {
-    return testWrapper(function (b) {
+var sum = $devinfo(function (a) {
+    return $devinfo(function (b) {
         return a + b;
     }, {
         loc: "source.js:2:12:4:6"
@@ -83,6 +83,6 @@ var foo = $devinfo([], {
 
 Meta data could contains those properties:
 
-- `loc` (String) expression definition code fragment location, in format% `filename:startLine:startColumn:endLineEnd:endColumn`
+- `loc` (String) expression definition code fragment location, in format: `filename:startLine:startColumn:endLineEnd:endColumn`
 - `blackbox` (Boolean) means that data is from blackboxed files and has low priority. Any non-blackboxed meta data could override this data.
 - `map` (Object) if literal object is wrapped, this property contains locations for every single value.
