@@ -4,14 +4,12 @@ var Minimatch = require('minimatch').Minimatch;
 module.exports = function(options){
     var registratorName = options.registratorName;
     var basePath = options.basePath || false;
-    var blackbox = false;
+    var blackbox = [
+        '/bower_compontents/**',
+        '/node_modules/**'
+    ];
 
-    if ('blackbox' in options === false || options.blackbox == null) {
-        blackbox = [
-            '/bower_compontents/**',
-            '/node_modules/**'
-        ];
-    } else {
+    if ('blackbox' in options !== false && options.blackbox != null) {
         if (Array.isArray(options.blackbox)) {
             blackbox = options.blackbox;
         } else {
