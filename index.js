@@ -2,7 +2,7 @@ var path = require('path');
 var Minimatch = require('minimatch').Minimatch;
 
 module.exports = function(options){
-    var registratorName = options.registratorName;
+    var registratorName = options.registratorName || '$devinfo';
     var basePath = options.basePath || false;
     var blackbox = [
         '/bower_compontents/**',
