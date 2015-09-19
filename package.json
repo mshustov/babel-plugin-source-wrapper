@@ -1,6 +1,6 @@
 {
   "name": "babel-plugin-source-wrapper",
-  "version": "0.0.3",
+  "version": "1.0.0",
   "dependencies": {
     "minimatch": "^2.0.0"
   },
