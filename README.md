@@ -1,5 +1,9 @@
 Babel plugin that instrument (transform) source code by wrapping some code fragemtns with function. This function returns wrapped value (result of expression) as is, but associates (attaches) meta data to it. This data contains information about code fragment location and could be fetched by developers tools (for example by [component-inspector](https://github.com/lahmatiy/component-inspector)).
 
+```
+npm install babel-plugin-source-wrapper --save-dev
+```
+
 ```js
 babel.transform(content, {
     sourceMaps: true,
