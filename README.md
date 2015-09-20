@@ -8,9 +8,11 @@ npm install babel-plugin-source-wrapper --save-dev
 babel.transform(content, {
     sourceMaps: true,
     plugins: [
-      require('babel-plugin-source-wrapper')({
-        // options 
-      })
+        require('babel-plugin-source-wrapper')
+        // or
+        require('babel-plugin-source-wrapper').configure({
+            // options
+        })
     ],
     ...
 });
@@ -22,7 +24,7 @@ Source (for example file name is `source.js`):
 
 ```js
 var sum = function(a) {
-    return function (b){
+    return function (b) {
         return a + b;
     }
 }
@@ -83,6 +85,13 @@ var foo = $devinfo([], {
 });
 ```
 
+### runtime
+
+- Type: `Boolean`
+- Default: `false`
+
+If set to `true` runtime API injected in every instrumented script (min version). It's add ~500 extra bytes to each script, but it's most simple way to make instrumented code works out of the box.
+
 ## Meta data
 
 Meta data could contains those properties:
@@ -90,3 +99,72 @@ Meta data could contains those properties:
 - `loc` (String) expression definition code fragment location, in format: `filename:startLine:startColumn:endLineEnd:endColumn`
 - `blackbox` (Boolean) means that data is from blackboxed files and has low priority. Any non-blackboxed meta data could override this data.
 - `map` (Object) if literal object is wrapped, this property contains locations for every single value.
+
+## Custom name of API (wrapping function)
+
+By default API name is `$devtools`. In case you need for another name follow should be done:
+
+- use `registratorName` plugin option to set name for wrapping function
+- define global variable `DEVINFO_API_NAME` with desired name of API or replace it's occurences in source, to make known to other tools the correct name for API
+
+## Using with build tools
+
+### Webpack
+
+Example config for webpack to use plugin:
+
+```js
+module.exports = {
+    // ...
+
+    devtool: 'source-map',  // source maps should be used to hide wrapping code
+
+    babel: {
+        plugins: [
+            // in case you are using React, this plugin should be applied
+            // before babel-plugin-source-wrapper
+            // otherwise component names will not to be shown propertly
+            require('babel-plugin-react-display-name'),
+
+            require('babel-plugin-source-wrapper').configure({
+                // webpack sends absolute paths to plugins
+                // but we need paths relative to project root
+                basePath: process.cwd(),
+
+                // inject runtime in instrumented sources
+                runtime: true
+            })
+        ]
+    }
+};
+```
+
+If custom name for API required, config should be extended:
+
+```js
+var webpack = require('webpack');
+
+module.exports = {
+    // ...
+
+    plugins: [
+        new webpack.DefinePlugin({
+            DEVINFO_API_NAME: '"customApiName"'
+        })
+    ],
+
+    babel: {
+        plugins: [
+            require('babel-plugin-source-wrapper').configure({
+                // ...
+                registratorName: 'customApiName'
+            })
+        ]
+    }
+};
+```
+
+### basisjs-tools
+
+You don't need use this plugin directly with `basisjs-tools`, just use [basisjs-tools-instrumenter](https://github.com/basisjs/basisjs-tools-instrumenter) that do all necessary job for you.
+
