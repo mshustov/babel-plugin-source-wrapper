@@ -1,7 +1,7 @@
 var path = require('path');
 var Minimatch = require('minimatch').Minimatch;
 
-module.exports = function(options){
+var createPluginFactory = function(options){
     var registratorName = options.registratorName || '$devinfo';
     var basePath = options.basePath || false;
     var blackbox = [
@@ -57,6 +57,11 @@ module.exports = function(options){
         var Plugin = _ref.Plugin;
         var t = _ref.types;
 
+        if (!Plugin) {
+            console.warn('Usage `require("babel-plugin-source-wrapper")(options)` is deprecated, use `require("babel-plugin-source-wrapper").configure(options)` instead.');
+            return createPluginFactory(_ref);
+        }
+
         function getLocation(file, node){
             if (node.loc) {
                 return calcLocation(file, node);
@@ -70,9 +75,11 @@ module.exports = function(options){
         }
 
         function extend(dest, source){
-            for (var key in source)
-                if (Object.prototype.hasOwnProperty.call(source, key))
+            for (var key in source) {
+                if (Object.prototype.hasOwnProperty.call(source, key)) {
                     dest[key] = source[key];
+                }
+            }
 
             return dest;
         }
@@ -215,4 +222,9 @@ module.exports = function(options){
             }
         });
     };
+};
+
+module.exports = createPluginFactory({});
+module.exports.configure = function(options){
+    return createPluginFactory(options || {});
 };
