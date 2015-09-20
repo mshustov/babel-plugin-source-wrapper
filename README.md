@@ -92,6 +92,41 @@ var foo = $devinfo([], {
 
 If set to `true` runtime API injected in every instrumented script (min version). It's add ~500 extra bytes to each script, but it's most simple way to make instrumented code works out of the box.
 
+## Runtime API
+
+Plugin package contains simple implementation of runtime API. It could injected by plugin in every single instrumented source if `runtime` option used. Or you could inject it in your html file directly:
+
+```js
+<script src="node_modules/babel-plugin-source-wrapper/runtime.js"></script>
+```
+
+> NOTE: It's important this script should be included before any instrumented script. Otherwise instrumented script throwing exception.
+
+You could implement your own API version and use it with instrumenting sources. Arguments of function:
+
+- `ref` - wrapped value (result of expression)
+- `data` - meta data, that could be attached to value
+- `force` - old meta data should be overrided by new one
+
+Function should return `ref` value as is.
+
+Here is boilerplate for custom implementation.
+
+```js
+(function(){
+    var apiName = typeof DEVINFO_API_NAME == 'string' ? DEVINFO_API_NAME : '$devinfo';
+
+    if (window[apiName]) {
+        return;
+    }
+
+    window[apiName] = function(ref, data, force){
+        // you implementation goes here
+        return ref;
+    };
+})();
+```
+
 ## Meta data
 
 Meta data could contains those properties:
@@ -167,4 +202,3 @@ module.exports = {
 ### basisjs-tools
 
 You don't need use this plugin directly with `basisjs-tools`, just use [basisjs-tools-instrumenter](https://github.com/basisjs/basisjs-tools-instrumenter) that do all necessary job for you.
-
