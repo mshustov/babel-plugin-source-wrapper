@@ -202,3 +202,7 @@ module.exports = {
 ### basisjs-tools
 
 You don't need use this plugin directly with `basisjs-tools`, just use [basisjs-tools-instrumenter](https://github.com/basisjs/basisjs-tools-instrumenter) that do all necessary job for you.
+
+## License
+
+MIT
