@@ -1,13 +1,19 @@
 var Minimatch = require('minimatch').Minimatch;
 var path = require('path');
+var runtimeScript = require('fs').readFileSync(__dirname + '/runtime.min.js', 'utf-8');
 
 var createPluginFactory = function(options) {
     var registratorName = options.registratorName || '$devinfo';
+    var runtime = '';
     var basePath = options.basePath || false;
     var blackbox = [
         '/bower_compontents/**',
         '/node_modules/**'
     ];
+
+    if (options.runtime) {
+        runtime = runtimeScript;
+    }
 
     if ('blackbox' in options !== false && options.blackbox != null) {
         if (Array.isArray(options.blackbox)) {
@@ -172,6 +178,14 @@ var createPluginFactory = function(options) {
                     }
 
                     isBlackbox = isBlackboxFile(filename);
+
+                    // inject runtime if necessary
+                    // current implementation weird and actually a hack
+                    // TODO: find correct way to this
+                    if (runtime) {
+                        var injection = t.identifier(runtime);
+                        node.body.unshift(t.expressionStatement(injection));
+                    }
                 },
 
                 shouldSkip: function(path) {
