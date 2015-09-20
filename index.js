@@ -1,7 +1,7 @@
-var path = require('path');
 var Minimatch = require('minimatch').Minimatch;
+var path = require('path');
 
-var createPluginFactory = function(options){
+var createPluginFactory = function(options) {
     var registratorName = options.registratorName || '$devinfo';
     var basePath = options.basePath || false;
     var blackbox = [
@@ -20,30 +20,18 @@ var createPluginFactory = function(options){
     }
 
     if (Array.isArray(blackbox)) {
-        blackbox = blackbox.map(function(str){
+        blackbox = blackbox.map(function(str) {
             return new Minimatch(str);
         });
     }
 
-    function isBlackbox(filename){
-        return blackbox && blackbox.some(function(mm){
+    function isBlackboxFile(filename) {
+        return blackbox && blackbox.some(function(mm) {
             return mm.match(filename);
         });
     }
 
-    function calcLocation(file, node){
-        var filename = 'unknown';
-
-        if (file.opts.filename) {
-            filename = file.opts.filename;
-            if (basePath) {
-                var relativePath = path.relative(basePath, file.opts.filename);
-                if (relativePath[0] != '.') {
-                    filename = '/' + relativePath;
-                }
-            }
-        }
-
+    function calcLocation(filename, node) {
         return [
             filename,
             node.loc.start.line,
@@ -53,28 +41,30 @@ var createPluginFactory = function(options){
         ].join(':');
     }
 
-    return function (_ref) {
+    return function(_ref) {
         var Plugin = _ref.Plugin;
         var t = _ref.types;
+        var filename = 'unknown';
+        var isBlackbox = false;
 
         if (!Plugin) {
             console.warn('Usage `require("babel-plugin-source-wrapper")(options)` is deprecated, use `require("babel-plugin-source-wrapper").configure(options)` instead.');
             return createPluginFactory(_ref);
         }
 
-        function getLocation(file, node){
+        function getLocation(node) {
             if (node.loc) {
-                return calcLocation(file, node);
+                return calcLocation(filename, node);
             }
 
             if (t.isCallExpression(node) && node.callee.name === registratorName) {
-                return calcLocation(file, node.arguments[0]); // or get loc from node.arguments[1]... ?s
+                return calcLocation(filename, node.arguments[0]); // or get loc from node.arguments[1]... ?s
             }
 
             return null;
         }
 
-        function extend(dest, source){
+        function extend(dest, source) {
             for (var key in source) {
                 if (Object.prototype.hasOwnProperty.call(source, key)) {
                     dest[key] = source[key];
@@ -84,7 +74,7 @@ var createPluginFactory = function(options){
             return dest;
         }
 
-        function createInfoObject(loc, isBlackbox, extra){
+        function createInfoObject(loc, extra) {
             var properties = [];
 
             if (loc) {
@@ -110,19 +100,19 @@ var createPluginFactory = function(options){
             return t.objectExpression(properties);
         }
 
-        function wrapNodeReference(loc, name, isBlackbox){
+        function wrapNodeReference(loc, name) {
             return t.expressionStatement(
                 t.callExpression(t.identifier(registratorName), [
                     t.identifier(name),
-                    createInfoObject(loc, isBlackbox)
+                    createInfoObject(loc)
                 ])
             );
         }
 
-        function wrapNode(loc, node, isBlackbox, force){
+        function wrapNode(loc, node, force) {
             var args = [
                 node,
-                createInfoObject(loc, isBlackbox)
+                createInfoObject(loc)
             ];
 
             if (force) {
@@ -132,10 +122,10 @@ var createPluginFactory = function(options){
             return t.callExpression(t.identifier(registratorName), args);
         }
 
-        function wrapObjectNode(loc, node, isBlackbox, map){
+        function wrapObjectNode(loc, node, map) {
             return t.callExpression(t.identifier(registratorName), [
                 node,
-                createInfoObject(loc, isBlackbox, [
+                createInfoObject(loc, [
                     t.property(
                         'init',
                         t.identifier('map'),
@@ -145,8 +135,8 @@ var createPluginFactory = function(options){
             ]);
         }
 
-        function buildMap(node, getLocation){
-            return node.properties.reduce(function(result, property){
+        function buildMap(node) {
+            return node.properties.reduce(function(result, property) {
                 if (!property.computed && property.kind == 'init') {
                     var value = property.value;
                     var location = getLocation(value);
@@ -167,55 +157,72 @@ var createPluginFactory = function(options){
         return new Plugin('babel-plugin-source-wrapper', {
             metadata: { secondPass: false },
             visitor: {
-                shouldSkip: function(path){
+                // init common things for all nodes
+                Program: function(node, parent, scope, file) {
+                    filename = 'unknown';
+
+                    if (file.opts.filename) {
+                        filename = file.opts.filename;
+                        if (basePath) {
+                            var relativePath = path.relative(basePath, file.opts.filename);
+                            if (relativePath[0] != '.') {
+                                filename = '/' + relativePath;
+                            }
+                        }
+                    }
+
+                    isBlackbox = isBlackboxFile(filename);
+                },
+
+                shouldSkip: function(path) {
                     return path.node.skip_;
                 },
 
-                'FunctionDeclaration|ClassDeclaration': function(node, parent, scope, file){
-                    var loc = getLocation(file, node);
-                    var node = wrapNodeReference(loc, node.id.name, isBlackbox(file.opts.filename));
+                'FunctionDeclaration|ClassDeclaration': function(node, parent, scope, file) {
+                    var loc = getLocation(node);
+                    var node = wrapNodeReference(loc, node.id.name);
                     node.skip_ = true;
                     this.insertAfter(node);
                 },
 
                 'FunctionExpression|ArrowFunctionExpression|ClassExpression|ArrayExpression|JSXElement': {
-                    exit: function(node, parent, scope, file){
+                    exit: function(node, parent, scope, file) {
                         // don't wrap class constructor as Babel fail on super call check
                         if (parent.type == 'MethodDefinition' && parent.key.name == 'constructor') {
                             return;
                         }
 
                         this.skip();
-                        var loc = getLocation(file, node);
-                        return wrapNode(loc, node, isBlackbox(file.opts.filename));
+                        var loc = getLocation(node);
+                        return wrapNode(loc, node);
                     }
                 },
 
                 NewExpression:  {
-                    exit: function(node, parent, scope, file){
+                    exit: function(node, parent, scope, file) {
                         this.skip();
-                        var loc = getLocation(file, node);
-                        return wrapNode(loc, node, isBlackbox(file.opts.filename), true);
+                        var loc = getLocation(node);
+                        return wrapNode(loc, node, true);
                     }
                 },
 
                 ObjectExpression: {
-                    enter: function(node, parent, scope, file){
-                        this.setData('map', buildMap(node, getLocation.bind(null, file)));
+                    enter: function(node, parent, scope, file) {
+                        this.setData('map', buildMap(node));
                     },
-                    exit: function(node, parent, scope, file){
+                    exit: function(node, parent, scope, file) {
                         this.skip();
-                        var loc = getLocation(file, node);
+                        var loc = getLocation(node);
                         var map = this.getData('map');
-                        return wrapObjectNode(loc, node, isBlackbox(file.opts.filename), map);
+                        return wrapObjectNode(loc, node, map);
                     }
                 },
                 CallExpression: {
-                    exit: function(node, parent, scope, file){
+                    exit: function(node, parent, scope, file) {
                         // add to another test
-                        if (t.isMemberExpression(node.callee) && !node.callee.computed){
-                            var loc = getLocation(file, node);
-                            return wrapNode(loc, node, isBlackbox(file.opts.filename));
+                        if (t.isMemberExpression(node.callee) && !node.callee.computed) {
+                            var loc = getLocation(node);
+                            return wrapNode(loc, node);
                         }
                     }
                 }
@@ -225,6 +232,6 @@ var createPluginFactory = function(options){
 };
 
 module.exports = createPluginFactory({});
-module.exports.configure = function(options){
+module.exports.configure = function(options) {
     return createPluginFactory(options || {});
 };
