@@ -23,7 +23,7 @@ function processFile(sourcePath){
         sourceMaps: true,
         optional: ['runtime'],
         plugins: [
-            require(pluginPath)({
+            require(pluginPath).configure({
                 "registratorName": "testWrapper"
             })
         ]
@@ -56,7 +56,7 @@ test('Blackbox setter', function (t) {
         sourceMaps: true,
         optional: ['runtime'],
         plugins: [
-            require(pluginPath)({
+            require(pluginPath).configure({
                 "registratorName": "testWrapper",
                 "blackbox": ['**/Blackbox/**']
             })
