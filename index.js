@@ -189,6 +189,15 @@ var createPluginFactory = function(options) {
                 },
 
                 shouldSkip: function(path) {
+                    // don't wrap arguments of `require.ensure` calls as webpack fails
+                    // TODO: find the way to safe wrapping
+                    if (path.node.type === 'CallExpression' &&
+                        path.node.callee.object &&
+                        path.node.callee.object.name === 'require' &&
+                        path.node.callee.property.name === 'ensure') {
+                        return true;
+                    }
+
                     return path.node.skip_;
                 },
 
