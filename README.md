@@ -1,5 +1,6 @@
 [![NPM version](https://img.shields.io/npm/v/babel-plugin-source-wrapper.svg)](https://www.npmjs.com/package/babel-plugin-source-wrapper)
 [![Dependency Status](https://img.shields.io/david/restrry/babel-plugin-source-wrapper.svg)](https://david-dm.org/restrry/babel-plugin-source-wrapper)
+[![Build Status](https://travis-ci.org/restrry/babel-plugin-source-wrapper.svg?branch=master)](https://travis-ci.org/restrry/babel-plugin-source-wrapper)
 
 Babel plugin that instrument (transform) source code by wrapping some code fragemtns with function. This function returns wrapped value (result of expression) as is, but associates (attaches) meta data to it. This data contains information about code fragment location and could be fetched by developers tools (for example by [component-inspector](https://github.com/lahmatiy/component-inspector)).
 
