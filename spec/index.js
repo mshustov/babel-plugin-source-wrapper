@@ -14,55 +14,55 @@ var types = [
     'Complex'
 ];
 
-function normalizeFilename(filename){
+function normalizeFilename(filename) {
     return path.normalize(filename).replace(/\\/g, '/');
 }
 
-function processFile(sourcePath){
+function processFile(sourcePath, options) {
     return babel.transformFileSync(sourcePath, {
         sourceMaps: true,
         optional: ['runtime'],
         plugins: [
-            require(pluginPath).configure({
-                "registratorName": "testWrapper"
-            })
+            require(pluginPath).configure(options)
         ]
-    });
+    }).code;
 }
 
-test('location wrapper', function (t) {
+function getExpected(expectedPath, sourcePath, registratorName) {
+    return fs.readFileSync(expectedPath, 'utf-8')
+        .replace(/\{\{(.*)\}\}/g, normalizeFilename(sourcePath))
+        .replace(new RegExp(registratorName, 'g'), '(' + registratorName + ')')
+        .replace(/\r/g, '');
+}
+
+test('location wrapper', function(t) {
     types.forEach(function(type) {
         test(type, function(t) {
-            // path.normalize
             var expectedPath = path.join(__dirname, 'fixtures', type, 'expected.js');
             var sourcePath = path.join(__dirname, 'fixtures', type, 'source.js');
 
-            var expected = fs.readFileSync(expectedPath, 'utf-8').replace(/\{\{(.*)\}\}/g, sourcePath);
-            var output = processFile(sourcePath);
+            var expected = getExpected(expectedPath, sourcePath, 'testWrapper');
+            var actual = processFile(sourcePath, {
+                'registratorName': 'testWrapper'
+            });
 
-            t.equal(expected, output.code);
+            t.equal(expected, actual);
             t.end();
         });
     });
     t.end();
 });
 
-test('Blackbox setter', function (t) {
+test('Blackbox setter', function(t) {
     var expectedPath = path.join(__dirname, 'fixtures', 'Blackbox', 'expected.js');
     var sourcePath = path.join(__dirname, 'fixtures', 'Blackbox', 'source.js');
 
-    var expected = fs.readFileSync(expectedPath, 'utf-8').replace(/\{\{(.*)\}\}/g, sourcePath);
-    var output = babel.transformFileSync(sourcePath, {
-        sourceMaps: true,
-        optional: ['runtime'],
-        plugins: [
-            require(pluginPath).configure({
-                "registratorName": "testWrapper",
-                "blackbox": ['**/Blackbox/**']
-            })
-        ]
-    });
+    var expected = getExpected(expectedPath, sourcePath, 'testWrapper');
+    var actual = processFile(sourcePath, {
+        'registratorName': 'testWrapper',
+        'blackbox': ['**/Blackbox/**']
+    });    
 
-    t.equal(expected, output.code);
+    t.equal(expected, actual);
     t.end();
 });
