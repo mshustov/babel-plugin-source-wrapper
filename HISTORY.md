@@ -1,3 +1,7 @@
+## 1.1.1 (September 22, 2015)
+
+- Wrap register function by sequence expression for more clear call stack output in Blink
+
 ## 1.1 (September 20, 2015)
 
 - Change API to configure plugin
