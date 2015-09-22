@@ -80,6 +80,22 @@ var createPluginFactory = function(options) {
             return dest;
         }
 
+        function createRegistratorCall(args) {
+            return t.callExpression(
+                // Sequence expression helps avoid registratorName including
+                // to generated names in Blink (other browser no make sence).
+                // It reduces noise in call stack output, i.e.
+                //   var a = { x: $devinfo(function(){ .. }) };    // function name is `a.x.$devinfo`
+                //   var a = { x: ($devinfo)(function(){ .. }) };  // function name is `a.x`
+                //
+                // Looks like a hack, but works.
+                t.sequenceExpression([
+                    t.identifier(registratorName)
+                ]),
+                args
+            );
+        }
+
         function createInfoObject(loc, extra) {
             var properties = [];
 
@@ -108,7 +124,7 @@ var createPluginFactory = function(options) {
 
         function wrapNodeReference(loc, name) {
             return t.expressionStatement(
-                t.callExpression(t.identifier(registratorName), [
+                createRegistratorCall([
                     t.identifier(name),
                     createInfoObject(loc)
                 ])
@@ -125,11 +141,11 @@ var createPluginFactory = function(options) {
                 args.push(t.literal(true));
             }
 
-            return t.callExpression(t.identifier(registratorName), args);
+            return createRegistratorCall(args);
         }
 
         function wrapObjectNode(loc, node, map) {
-            return t.callExpression(t.identifier(registratorName), [
+            return createRegistratorCall([
                 node,
                 createInfoObject(loc, [
                     t.property(
