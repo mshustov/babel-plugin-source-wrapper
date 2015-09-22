@@ -6,7 +6,7 @@
   "contributors": [
     "Roman Dvornov <rdvornov@gmail.com>"
   ],
-  "licenses": "MIT",
+  "license": "MIT",
   "repository": "restrry/babel-plugin-source-wrapper",
   "keywords": [
     "babel",
