@@ -1,26 +1,31 @@
-(function(){
-    var apiName = typeof DEVINFO_API_NAME == 'string' ? DEVINFO_API_NAME : '$devinfo';
-    var api;
-
-    if (window[apiName]) {
+(function(global, apiName){
+    if (global[apiName]) {
         return;
     }
 
-    var WeakMap = window.WeakMap;
+    var WeakMap = global.WeakMap;
+    var setter;
+    var getter;
+    var api;
 
     if (typeof WeakMap !== 'function' ||
-        // avoid to use polyfills of WeakMap as it mutate objects
+        // avoid to use polyfills of WeakMap as it cause to object mutations
         !/\[native code\]/.test(WeakMap)) {
-        console.info(apiName + ' API is not available (WeakMap isn\'t supported)');
+        if (global.console) {
+            console.info(apiName + ' API is not available (WeakMap isn\'t supported)');
+        }
 
         // fallback
-        api = function(ref) {
+        setter = function(ref) {
             return ref;
+        };
+        getter = function() {
+            // nothing to return
         };
     } else {
         var map = new WeakMap();
 
-        api = function(ref, data, force) {
+        setter = function(ref, data, force) {
             if (data && ref && (typeof ref === 'object' || typeof ref === 'function')) {
                 var curData = map.get(ref);
                 if (force || !curData || (curData.blackbox && !data.blackbox)) {
@@ -30,15 +35,31 @@
 
             return ref;
         };
-
-        api.set = api;
-        api.get = function(ref) {
+        
+        getter = function(ref) {
             if (ref) {
                 return map.get(ref);
             }
         };
     }
 
+    api = setter;
+    api.set = setter;
+    api.get = getter;
+    api.wrapDecorator = function(decorator, data) {
+        return function(original) {
+            var result = decorator.apply(this, arguments);
+
+            if (result && result !== original) {
+                // set data to new value with force to refer
+                // to decorator usage location
+                setter(result, data, true);
+            }
+
+            return result;
+        };
+    }
+
     // export API to global scope
-    window[apiName] = api;
-})();
+    global[apiName] = api;
+})(window, typeof DEVINFO_API_NAME == 'string' ? DEVINFO_API_NAME : '$devinfo');

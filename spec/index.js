@@ -10,6 +10,7 @@ var types = [
     'FunctionExpression',
     'ObjectExpression',
     'CallExpression',
+    'Decorator',
     'ArrayExpression',
     'Complex'
 ];
@@ -20,6 +21,7 @@ function normalizeFilename(filename) {
 
 function processFile(sourcePath, options) {
     return babel.transformFileSync(sourcePath, {
+        stage: 0,
         sourceMaps: true,
         optional: ['runtime'],
         plugins: [
@@ -30,9 +32,10 @@ function processFile(sourcePath, options) {
 
 function getExpected(expectedPath, sourcePath, registratorName) {
     return fs.readFileSync(expectedPath, 'utf-8')
-        .replace(/\{\{(.*)\}\}/g, normalizeFilename(sourcePath))
-        .replace(new RegExp(registratorName, 'g'), '(' + registratorName + ')')
-        .replace(/\r/g, '');
+        .replace(/\{\{path\}\}/g, normalizeFilename(sourcePath))
+        .replace(new RegExp(registratorName + '(?!\\.)', 'g'), '(' + registratorName + ')')
+        .replace(/\r/g, '')
+        .trim();
 }
 
 test('location wrapper', function(t) {

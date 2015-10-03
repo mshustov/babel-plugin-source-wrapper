@@ -176,6 +176,19 @@ var createPluginFactory = function(options) {
             }, []);
         }
 
+        function wrapDecoratorNode(loc, node) {
+            node.expression = t.callExpression(
+                t.memberExpression(
+                    t.identifier(registratorName),
+                    t.identifier('wrapDecorator')
+                ),
+                [
+                    node.expression,
+                    createInfoObject(loc)
+                ]
+            );
+        }
+
         return new Plugin('babel-plugin-source-wrapper', {
             metadata: { secondPass: false },
             visitor: {
@@ -256,13 +269,22 @@ var createPluginFactory = function(options) {
                         return wrapObjectNode(loc, node, map);
                     }
                 },
+
                 CallExpression: {
                     exit: function(node, parent, scope, file) {
-                        // add to another test
+                        // TODO: add comment what is filtering here
                         if (t.isMemberExpression(node.callee) && !node.callee.computed) {
                             var loc = getLocation(node);
                             return wrapNode(loc, node);
                         }
+                    }
+                },
+
+                Decorator: {
+                    exit: function(node, parent, scope, file) {
+                        this.skip();
+                        var loc = getLocation(node);
+                        return wrapDecoratorNode(loc, node);
                     }
                 }
             }
