@@ -8,4 +8,11 @@ class Bar {}
   @decorator
   method() {}
 })
-class Baz {}
+class Baz {
+  @decorator
+  method() {}
+}
+
+@decorator
+@decorator
+class Qux {}

@@ -12,7 +12,7 @@
         // avoid to use polyfills of WeakMap as it cause to object mutations
         !/\[native code\]/.test(WeakMap)) {
         if (global.console) {
-            console.info(apiName + ' API is not available (WeakMap isn\'t supported)');
+            console.info(apiName + ' API is not available (native WeakMap support required)');
         }
 
         // fallback
@@ -46,17 +46,30 @@
     api = setter;
     api.set = setter;
     api.get = getter;
-    api.wrapDecorator = function(decorator, data) {
-        return function(original) {
-            var result = decorator.apply(this, arguments);
-
-            if (result && result !== original) {
-                // set data to new value with force to refer
-                // to decorator usage location
-                setter(result, data, true);
+    api.wrapDecorator = function(decorator, newValueData, prevValueData) {
+        return function(prevValue) {
+            if (prevValueData) {
+                setter(prevValue, prevValueData);
             }
 
-            return result;
+            var newValue = decorator.apply(this, arguments);
+
+            if (newValue && newValue !== prevValue) {
+                var data = {
+                    wrapperType: 'decorator',
+                    wrapperFor: prevValue
+                };
+
+                for (var key in newValueData) {
+                    data[key] = newValueData[key];
+                }
+
+                // set data to new value with force to refer
+                // to decorator usage location
+                setter(newValue, data, true);
+            }
+
+            return newValue;
         };
     }
 

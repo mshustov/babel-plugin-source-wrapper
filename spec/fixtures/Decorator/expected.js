@@ -2,6 +2,8 @@
 
 var _classCallCheck = require("babel-runtime/helpers/class-call-check")["default"];
 
+var _createDecoratedClass = require("babel-runtime/helpers/create-decorated-class")["default"];
+
 var _createDecoratedObject = require("babel-runtime/helpers/create-decorated-object")["default"];
 
 var Foo = (function () {
@@ -12,13 +14,11 @@ var Foo = (function () {
   var _Foo = Foo;
   Foo = testWrapper.wrapDecorator(decorator, {
     loc: "{{path}}:1:1:1:11"
+  }, {
+    loc: "{{path}}:2:1:2:13"
   })(Foo) || Foo;
   return Foo;
 })();
-
-testWrapper(Foo, {
-  loc: "{{path}}:2:1:2:13"
-});
 
 var Bar = (function () {
   function Bar() {
@@ -33,25 +33,29 @@ var Bar = (function () {
     }
   })), {
     loc: "{{path}}:4:1:4:21"
+  }, {
+    loc: "{{path}}:5:1:5:13"
   })(Bar) || Bar;
   return Bar;
 })();
-
-testWrapper(Bar, {
-  loc: "{{path}}:5:1:5:13"
-});
 
 var Baz = (function () {
   function Baz() {
     _classCallCheck(this, _Baz);
   }
 
+  _createDecoratedClass(Baz, [{
+    key: "method",
+    decorators: [decorator],
+    value: testWrapper(function () {}, {
+      loc: "{{path}}:13:9:13:14"
+    })
+  }]);
+
   var _Baz = Baz;
   Baz = testWrapper.wrapDecorator(decorator(testWrapper(_createDecoratedObject([{
     key: "method",
-    decorators: [testWrapper.wrapDecorator(decorator, {
-      loc: "{{path}}:8:3:8:13"
-    })],
+    decorators: [decorator],
     value: testWrapper(function () {}, {
       loc: "{{path}}:9:9:9:14"
     })
@@ -62,10 +66,25 @@ var Baz = (function () {
     }
   })), {
     loc: "{{path}}:7:1:10:3"
+  }, {
+    loc: "{{path}}:11:1:14:2"
   })(Baz) || Baz;
   return Baz;
 })();
 
-testWrapper(Baz, {
-  loc: "{{path}}:11:1:11:13"
-});
+var Qux = (function () {
+  function Qux() {
+    _classCallCheck(this, _Qux);
+  }
+
+  var _Qux = Qux;
+  Qux = testWrapper.wrapDecorator(decorator, {
+    loc: "{{path}}:17:1:17:11"
+  }, {
+    loc: "{{path}}:18:1:18:13"
+  })(Qux) || Qux;
+  Qux = testWrapper.wrapDecorator(decorator, {
+    loc: "{{path}}:16:1:16:11"
+  })(Qux) || Qux;
+  return Qux;
+})();

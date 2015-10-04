@@ -122,13 +122,17 @@ var createPluginFactory = function(options) {
             return t.objectExpression(properties);
         }
 
-        function wrapNodeReference(loc, name) {
-            return t.expressionStatement(
+        function wrapNodeReference(loc, node) {
+            var wrapper = t.expressionStatement(
                 createRegistratorCall([
-                    t.identifier(name),
+                    t.identifier(node.id.name),
                     createInfoObject(loc)
                 ])
             );
+
+            wrapper.skip_ = true;
+
+            return wrapper;
         }
 
         function wrapNode(loc, node, force) {
@@ -176,16 +180,22 @@ var createPluginFactory = function(options) {
             }, []);
         }
 
-        function wrapDecoratorNode(loc, node) {
+        function wrapDecoratorNode(node, decoratorLoc, classLoc) {
+            var args = [
+                node.expression,
+                createInfoObject(decoratorLoc)
+            ];
+
+            if (classLoc) {
+                args.push(createInfoObject(classLoc));
+            }
+
             node.expression = t.callExpression(
                 t.memberExpression(
                     t.identifier(registratorName),
                     t.identifier('wrapDecorator')
                 ),
-                [
-                    node.expression,
-                    createInfoObject(loc)
-                ]
+                args
             );
         }
 
@@ -230,11 +240,29 @@ var createPluginFactory = function(options) {
                     return path.node.skip_;
                 },
 
-                'FunctionDeclaration|ClassDeclaration': function(node, parent, scope, file) {
+                FunctionDeclaration: function(node, parent, scope, file) {
                     var loc = getLocation(node);
-                    var node = wrapNodeReference(loc, node.id.name);
-                    node.skip_ = true;
-                    this.insertAfter(node);
+                    
+                    this.insertAfter(
+                        wrapNodeReference(loc, node)
+                    );
+                },
+
+                ClassDeclaration: function(node, parent, scope, file) {
+                    // don't wrap a class declaration with decorators, since
+                    // it is unlikely that we will have the correct reference
+                    // to the class; info will be attached in first applied
+                    // decorator
+                    if (node.decorators) {
+                        return;
+                    }
+
+                    // if no decorators wrap class declaration reference
+                    var loc = getLocation(node);
+
+                    this.insertAfter(
+                        wrapNodeReference(loc, node)
+                    );
                 },
 
                 'FunctionExpression|ArrowFunctionExpression|ClassExpression|ArrayExpression|JSXElement': {
@@ -282,9 +310,20 @@ var createPluginFactory = function(options) {
 
                 Decorator: {
                     exit: function(node, parent, scope, file) {
+                        // process class declaration decorators only
+                        if (parent.type != 'ClassDeclaration') {
+                            return;
+                        }
+
                         this.skip();
-                        var loc = getLocation(node);
-                        return wrapDecoratorNode(loc, node);
+                        var decoratorLoc = getLocation(node);
+                        var classLoc;
+
+                        if (node === parent.decorators[parent.decorators.length - 1]) {
+                            classLoc = getLocation(parent);
+                        }
+
+                        return wrapDecoratorNode(node, decoratorLoc, classLoc);
                     }
                 }
             }
