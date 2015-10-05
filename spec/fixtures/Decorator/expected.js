@@ -13,12 +13,16 @@ var Foo = (function () {
 
   var _Foo = Foo;
   Foo = testWrapper.wrapDecorator(decorator, {
-    loc: "{{path}}:1:1:1:11",
-    type: "decorator",
-    name: "decorator",
+    index: 0,
     target: null
   }, {
-    loc: "{{path}}:2:1:2:13"
+    loc: "{{path}}:2:1:2:13",
+    type: "class",
+    decorators: [{
+      loc: "{{path}}:1:1:1:11",
+      name: "decorator",
+      fn: decorator
+    }]
   })(Foo) || Foo;
   return Foo;
 })();
@@ -35,12 +39,16 @@ var Bar = (function () {
       a: "{{path}}:4:17:4:18"
     }
   })), {
-    loc: "{{path}}:4:1:4:21",
-    type: "decorator",
-    name: "decorator(…)",
+    index: 0,
     target: null
   }, {
-    loc: "{{path}}:5:1:5:13"
+    loc: "{{path}}:5:1:5:13",
+    type: "class",
+    decorators: [{
+      loc: "{{path}}:4:1:4:21",
+      name: "decorator(…)",
+      fn: decorator
+    }]
   })(Bar) || Bar;
   return Bar;
 })();
@@ -71,12 +79,16 @@ var Baz = (function () {
       method: "{{path}}:9:9:9:14"
     }
   })), {
-    loc: "{{path}}:7:1:10:3",
-    type: "decorator",
-    name: "decorator(…)",
+    index: 0,
     target: null
   }, {
-    loc: "{{path}}:11:1:14:2"
+    loc: "{{path}}:11:1:14:2",
+    type: "class",
+    decorators: [{
+      loc: "{{path}}:7:1:10:3",
+      name: "decorator(…)",
+      fn: decorator
+    }]
   })(Baz) || Baz;
   return Baz;
 })();
@@ -88,17 +100,23 @@ var Qux = (function () {
 
   var _Qux = Qux;
   Qux = testWrapper.wrapDecorator(decorator, {
-    loc: "{{path}}:17:1:17:11",
-    type: "decorator",
-    name: "decorator",
+    index: 1,
     target: null
   }, {
-    loc: "{{path}}:18:1:18:13"
+    loc: "{{path}}:18:1:18:13",
+    type: "class",
+    decorators: [{
+      loc: "{{path}}:16:1:16:11",
+      name: "decorator",
+      fn: decorator
+    }, {
+      loc: "{{path}}:17:1:17:11",
+      name: "decorator",
+      fn: decorator
+    }]
   })(Qux) || Qux;
   Qux = testWrapper.wrapDecorator(decorator, {
-    loc: "{{path}}:16:1:16:11",
-    type: "decorator",
-    name: "decorator",
+    index: 0,
     target: null
   })(Qux) || Qux;
   return Qux;

@@ -126,11 +126,14 @@ var createPluginFactory = function(options) {
             return t.objectExpression(properties);
         }
 
-        function wrapNodeReference(loc, node) {
+        function wrapNodeReference(loc, node, type) {
             var wrapper = t.expressionStatement(
                 createRegistratorCall([
                     t.identifier(node.id.name),
-                    createInfoObject(loc)
+                    createInfoObject(
+                        loc,
+                        type ? [simpleProperty('type', 'class')] : null
+                    )
                 ])
             );
 
@@ -184,7 +187,7 @@ var createPluginFactory = function(options) {
             }, []);
         }
 
-        function getDecoratorName(node) {
+        function getDecoratorName(node, signature) {
             var expression = node.expression;
 
             switch (expression.type) {
@@ -193,28 +196,53 @@ var createPluginFactory = function(options) {
 
                 case 'CallExpression':
                     if (expression.callee.type === 'Identifier') {
-                        return expression.callee.name + '(' +
-                            (expression.arguments.length ? '\u2026' : '') + // '…'
-                        ')';
+                        var postfix = '';
+
+                        if (signature) {
+                            postfix = '(' +
+                                (expression.arguments.length ? '\u2026' : '') + // '…'
+                            ')';
+                        }
+
+                        return expression.callee.name + postfix;
                     }
                     break;
             }
-
-            return 'unknown';
         }
 
-        function wrapDecoratorNode(node, decoratorLoc, classLoc) {
+        function buildDecoratorList(decorators) {
+            return t.arrayExpression(decorators.map(function(decorator) {
+                var name = getDecoratorName(decorator);
+                var properties = [
+                    simpleProperty('loc', getLocation(decorator)),
+                    simpleProperty('name', name ? getDecoratorName(decorator, true) : 'unknown')
+                ];
+
+                if (name) {
+                    properties.push(
+                        t.property(
+                            'init',
+                            t.identifier('fn'),
+                            t.identifier(name)
+                        )
+                    );
+                }
+
+                return t.objectExpression(properties);
+            }));
+        }
+
+        function wrapDecoratorNode(node, loc, index, classInfo) {
             var args = [
                 node.expression,
-                createInfoObject(decoratorLoc, [
-                    simpleProperty('type', 'decorator'),
-                    simpleProperty('name', getDecoratorName(node)),
+                t.objectExpression([
+                    simpleProperty('index', index),
                     simpleProperty('target', null)
                 ])
             ];
 
-            if (classLoc) {
-                args.push(createInfoObject(classLoc));
+            if (classInfo) {
+                args.push(classInfo);
             }
 
             node.expression = t.callExpression(
@@ -281,6 +309,18 @@ var createPluginFactory = function(options) {
                     // to the class; info will be attached in first applied
                     // decorator
                     if (node.decorators) {
+                        var lastDecorator = node.decorators[node.decorators.length - 1];
+                        lastDecorator.devClassInfo = createInfoObject(
+                            getLocation(node),
+                            [
+                                simpleProperty('type', 'class'),
+                                t.property(
+                                    'init',
+                                    t.identifier('decorators'),
+                                    buildDecoratorList(node.decorators)
+                                )
+                            ]
+                        );
                         return;
                     }
 
@@ -288,7 +328,7 @@ var createPluginFactory = function(options) {
                     var loc = getLocation(node);
 
                     this.insertAfter(
-                        wrapNodeReference(loc, node)
+                        wrapNodeReference(loc, node, 'class')
                     );
                 },
 
@@ -343,14 +383,12 @@ var createPluginFactory = function(options) {
                         }
 
                         this.skip();
-                        var decoratorLoc = getLocation(node);
-                        var classLoc;
 
-                        if (node === parent.decorators[parent.decorators.length - 1]) {
-                            classLoc = getLocation(parent);
-                        }
+                        var loc = getLocation(node);
+                        var decorators = parent.decorators;
+                        var index = decorators.indexOf(node);
 
-                        return wrapDecoratorNode(node, decoratorLoc, classLoc);
+                        return wrapDecoratorNode(node, loc, index, node.devClassInfo);
                     }
                 }
             }
