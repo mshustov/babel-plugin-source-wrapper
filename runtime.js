@@ -46,8 +46,9 @@
     api = setter;
     api.set = setter;
     api.get = getter;
-    api.wrapDecorator = function(decorator, newValueData, prevValueData) {
+    api.wrapDecorator = function(decorator, wrapperData, prevValueData) {
         return function(prevValue) {
+            // actuallyit should be true for first decorator only
             if (prevValueData) {
                 setter(prevValue, prevValueData);
             }
@@ -55,18 +56,15 @@
             var newValue = decorator.apply(this, arguments);
 
             if (newValue && newValue !== prevValue) {
-                var data = {
-                    wrapperType: 'decorator',
-                    wrapperFor: prevValue
-                };
+                // fetch existed data or create new one
+                var data = getter(newValue) || {};
 
-                for (var key in newValueData) {
-                    data[key] = newValueData[key];
-                }
+                // add wrapper info
+                data.wrapper = wrapperData;
+                wrapperData.target = prevValue;
 
-                // set data to new value with force to refer
-                // to decorator usage location
-                setter(newValue, data, true);
+                // in case there is no data set before
+                setter(newValue, data);
             }
 
             return newValue;

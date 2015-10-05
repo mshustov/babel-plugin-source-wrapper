@@ -13,7 +13,10 @@ var Foo = (function () {
 
   var _Foo = Foo;
   Foo = testWrapper.wrapDecorator(decorator, {
-    loc: "{{path}}:1:1:1:11"
+    loc: "{{path}}:1:1:1:11",
+    type: "decorator",
+    name: "decorator",
+    target: null
   }, {
     loc: "{{path}}:2:1:2:13"
   })(Foo) || Foo;
@@ -32,7 +35,10 @@ var Bar = (function () {
       a: "{{path}}:4:17:4:18"
     }
   })), {
-    loc: "{{path}}:4:1:4:21"
+    loc: "{{path}}:4:1:4:21",
+    type: "decorator",
+    name: "decorator(…)",
+    target: null
   }, {
     loc: "{{path}}:5:1:5:13"
   })(Bar) || Bar;
@@ -65,7 +71,10 @@ var Baz = (function () {
       method: "{{path}}:9:9:9:14"
     }
   })), {
-    loc: "{{path}}:7:1:10:3"
+    loc: "{{path}}:7:1:10:3",
+    type: "decorator",
+    name: "decorator(…)",
+    target: null
   }, {
     loc: "{{path}}:11:1:14:2"
   })(Baz) || Baz;
@@ -79,12 +88,18 @@ var Qux = (function () {
 
   var _Qux = Qux;
   Qux = testWrapper.wrapDecorator(decorator, {
-    loc: "{{path}}:17:1:17:11"
+    loc: "{{path}}:17:1:17:11",
+    type: "decorator",
+    name: "decorator",
+    target: null
   }, {
     loc: "{{path}}:18:1:18:13"
   })(Qux) || Qux;
   Qux = testWrapper.wrapDecorator(decorator, {
-    loc: "{{path}}:16:1:16:11"
+    loc: "{{path}}:16:1:16:11",
+    type: "decorator",
+    name: "decorator",
+    target: null
   })(Qux) || Qux;
   return Qux;
 })();

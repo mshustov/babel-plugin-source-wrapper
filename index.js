@@ -80,6 +80,14 @@ var createPluginFactory = function(options) {
             return dest;
         }
 
+        function simpleProperty(name, value) {
+            return t.property(
+                'init',
+                t.identifier(name),
+                t.literal(value)
+            );
+        }
+
         function createRegistratorCall(args) {
             return t.callExpression(
                 // Sequence expression helps avoid registratorName including
@@ -100,19 +108,15 @@ var createPluginFactory = function(options) {
             var properties = [];
 
             if (loc) {
-                properties.push(t.property(
-                    'init',
-                    t.identifier('loc'),
-                    t.literal(loc)
-                ));
+                properties.push(
+                    simpleProperty('loc', loc)
+                );
             }
 
             if (isBlackbox) {
-                properties.push(t.property(
-                    'init',
-                    t.identifier('blackbox'),
-                    t.literal(true)
-                ));
+                properties.push(
+                    simpleProperty('blackbox', true)
+                );
             }
 
             if (extra) {
@@ -180,10 +184,33 @@ var createPluginFactory = function(options) {
             }, []);
         }
 
+        function getDecoratorName(node) {
+            var expression = node.expression;
+
+            switch (expression.type) {
+                case 'Identifier':
+                    return expression.name;
+
+                case 'CallExpression':
+                    if (expression.callee.type === 'Identifier') {
+                        return expression.callee.name + '(' +
+                            (expression.arguments.length ? '\u2026' : '') + // '…'
+                        ')';
+                    }
+                    break;
+            }
+
+            return 'unknown';
+        }
+
         function wrapDecoratorNode(node, decoratorLoc, classLoc) {
             var args = [
                 node.expression,
-                createInfoObject(decoratorLoc)
+                createInfoObject(decoratorLoc, [
+                    simpleProperty('type', 'decorator'),
+                    simpleProperty('name', getDecoratorName(node)),
+                    simpleProperty('target', null)
+                ])
             ];
 
             if (classLoc) {
