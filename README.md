@@ -256,7 +256,7 @@ Just blackbox runtime script in your browser, and you'll never see it again.
 
 ![Blackbox runtime script](https://github.com/restrry/babel-plugin-source-wrapper/raw/master/blackbox.png)
 
-### When I get source location it point to library source by not my own
+### When I get source location it points to library source by not to my source
 
 Use [blackbox](#blackbox) setting to specify library files. Info info those files has lower priority and mostly overrides by info in your sources.
 
