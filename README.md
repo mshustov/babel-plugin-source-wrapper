@@ -2,11 +2,55 @@
 [![Dependency Status](https://img.shields.io/david/restrry/babel-plugin-source-wrapper.svg)](https://david-dm.org/restrry/babel-plugin-source-wrapper)
 [![Build Status](https://travis-ci.org/restrry/babel-plugin-source-wrapper.svg?branch=master)](https://travis-ci.org/restrry/babel-plugin-source-wrapper)
 
-Babel plugin that instrument (transform) source code by wrapping some code fragemtns with function. This function returns wrapped value (result of expression) as is, but associates (attaches) meta data to it. This data contains information about code fragment location and could be fetched by developers tools (for example by [component-inspector](https://github.com/lahmatiy/component-inspector)).
+Babel plugin that source code instrumenting by wrapping code fragments by special functions. Those functions return wrapped value (result of expression evaluating) as is, but associate (attach) meta data to value. This data contains information about code fragment location and other details, that could be fetched by developers tools (for example [component-inspector](https://github.com/lahmatiy/component-inspector)).
+
+## Example of instrumenting
+
+Source:
+
+```js
+var array = [1, 2, 3];
+var square = function(a) {
+    return a * a;
+};
+
+var oddSquares = array.map(square).filter(function(n) {
+  return n % 2;
+});
+```
+
+Result:
+
+```js
+Function('...runtime...')(window,"string"==typeof DEVINFO_API_NAME?DEVINFO_API_NAME:"$devinfo");
+
+var array = $devinfo([1, 2, 3], {
+  loc: "path/to/filename.js:1:13:1:22"
+});
+var square = $devinfo(function (a) {
+  return a * a;
+}, {
+  loc: "path/to/filename.js:2:14:4:2"
+});
+
+var oddSquares = $devinfo($devinfo(array.map(square), {
+  loc: "path/to/filename.js:6:18:6:35"
+}).filter($devinfo(function (n) {
+  return n % 2;
+}, {
+  loc: "path/to/filename.js:6:43:8:2"
+})), {
+  loc: "path/to/filename.js:6:18:8:3"
+});
+```
+
+## Install
 
 ```
 npm install babel-plugin-source-wrapper --save-dev
 ```
+
+## Usage
 
 ```js
 babel.transform(content, {
@@ -22,53 +66,25 @@ babel.transform(content, {
 });
 ```
 
-## Example of transformation
-
-Source (for example file name is `source.js`):
-
-```js
-var sum = function(a) {
-    return function (b) {
-        return a + b;
-    }
-}
-```
-
-Result:
-
-```js
-var sum = $devinfo(function (a) {
-    return $devinfo(function (b) {
-        return a + b;
-    }, {
-        loc: "source.js:2:12:4:6"
-    });
-}, {
-    loc: "source.js:1:11:5:2"
-});
-
-//# sourceMappingURL=...
-```
-
-## Options
+### Options
 
 All options are optional.
 
-### registratorName
+#### registratorName
 
 - Type: `String`
 - Default: `$devinfo`
 
 Set custom name for wrap function. This function also will be host of API.
 
-### blackbox
+#### blackbox
 
 - Type: `Array` or `false`
 - Default: `["/bower_compontents/**", "/node_modules/**"]`
 
 List of `minimatch` masks for source filenames, which dev info should be marked as `blackbox`. Info with `blackbox: true` has lower priority and overrides by info without this marker.
 
-### basePath
+#### basePath
 
 - Type: `String` or `false`
 - Default: `false`
@@ -77,7 +93,7 @@ Sometimes plugin gets absolute file paths. But for some reasons relative to some
 
 ```js
 var foo = $devinfo([], {
-    loc: "/Users/name/git/project/js/app.js:1:11:1:13"
+    loc: "/Users/name/git/projectpath/to/filename.js:1:11:1:13"
 });
 ```
 
@@ -85,66 +101,16 @@ But if `basePath` is set to `'/Users/name/git/project'`,
 
 ```js
 var foo = $devinfo([], {
-    loc: "/js/app.js:1:11:1:13"
+    loc: "path/to/filename.js:1:11:1:13"
 });
 ```
 
-### runtime
+#### runtime
 
 - Type: `Boolean`
 - Default: `false`
 
 If set to `true` runtime API injected in every instrumented script (min version). It's add ~500 extra bytes to each script, but it's most simple way to make instrumented code works out of the box.
-
-## Runtime API
-
-Plugin package contains simple implementation of runtime API. It could injected by plugin in every single instrumented source if `runtime` option used. Or you could inject it in your html file directly:
-
-```js
-<script src="node_modules/babel-plugin-source-wrapper/runtime.js"></script>
-```
-
-> NOTE: It's important this script should be included before any instrumented script. Otherwise instrumented script throwing exception.
-
-You could implement your own API version and use it with instrumenting sources. Arguments of function:
-
-- `ref` - wrapped value (result of expression)
-- `data` - meta data, that could be attached to value
-- `force` - old meta data should be overrided by new one
-
-Function should return `ref` value as is.
-
-Here is boilerplate for custom implementation.
-
-```js
-(function(){
-    var apiName = typeof DEVINFO_API_NAME == 'string' ? DEVINFO_API_NAME : '$devinfo';
-
-    if (window[apiName]) {
-        return;
-    }
-
-    window[apiName] = function(ref, data, force){
-        // you implementation goes here
-        return ref;
-    };
-})();
-```
-
-## Meta data
-
-Meta data could contains those properties:
-
-- `loc` (String) expression definition code fragment location, in format: `filename:startLine:startColumn:endLineEnd:endColumn`
-- `blackbox` (Boolean) means that data is from blackboxed files and has low priority. Any non-blackboxed meta data could override this data.
-- `map` (Object) if literal object is wrapped, this property contains locations for every single value.
-
-## Custom name of API (wrapping function)
-
-By default API name is `$devtools`. In case you need for another name follow should be done:
-
-- use `registratorName` plugin option to set name for wrapping function
-- define global variable `DEVINFO_API_NAME` with desired name of API or replace it's occurences in source, to make known to other tools the correct name for API
 
 ## Using with build tools
 
@@ -206,6 +172,93 @@ module.exports = {
 ### basisjs-tools
 
 You don't need use this plugin directly with `basisjs-tools`, just use [basisjs-tools-instrumenter](https://github.com/basisjs/basisjs-tools-instrumenter) that do all necessary job for you.
+
+## Runtime API
+
+Plugin package contains simple implementation of runtime API. It could be injected by plugin in every single instrumented source if `runtime` option is used. Or you can inject runtime once in your html file directly:
+
+```js
+<script src="node_modules/babel-plugin-source-wrapper/runtime.js"></script>
+```
+
+> IMPORTANT: Script should be included before any instrumented script. Otherwise instrumented source will throw an exception about missed functions.
+
+### Custom runtime API
+
+You could implement your own API version for instrumenting sources. 
+
+API should be presented by function, that's also host for other functions (methods). This function should return `ref` value as is. Arguments:
+
+- `ref` - wrapped value (result of expression)
+- `data` - meta data, that could be attached to value
+- `force` - old meta data should be overrided by new one
+
+Additional methods:
+
+- `set(ref, data, force)` – alias for main function
+- `get(ref)` – function to retrieve stored data for `ref`
+- `wrapDecorator(decorator, wrapperData, prevValueData)` – function for wrapping [ES7 decorator](https://github.com/wycats/javascript-decorators) expressions; should return function that invokes decorator and returns it result
+
+Boilerplate for custom implementation:
+
+```js
+(function(){
+    var apiName = typeof DEVINFO_API_NAME == 'string' ? DEVINFO_API_NAME : '$devinfo';
+
+    if (window[apiName]) {
+        return;
+    }
+
+    var setter = function(ref, data, force){
+        // you implementation goes here
+        return ref;
+    };
+    var api = setter;
+
+    api.set = setter;
+    api.get = function(ref) {};
+    api.wrapDecorator = function(decorator, wrapperData, prevValueData) {
+        return function() {
+            return decorator.apply(this, arguments);
+        };
+    };
+
+    window[apiName] = api;
+})();
+```
+
+### Custom name of API (wrapping function)
+
+By default API name is `$devtools`. In case you need for another name there are options:
+
+- use `registratorName` plugin option to set name for wrapping function
+- define global variable `DEVINFO_API_NAME` with desired name of API or replace it's occurences in source, to make known to other tools the correct name for API
+
+## Meta data
+
+Meta data could contains those properties:
+
+- `loc` (String) expression definition code fragment location, in format: `filename:startLine:startColumn:endLineEnd:endColumn`
+- `blackbox` (Boolean) means that data is from blackboxed files and has low priority. Any non-blackboxed meta data could override this data.
+- `map` (Object) if literal object is wrapped, this property contains locations for every single value.
+
+## Problem solving
+
+### My source code became ugly, I can't read it anymore
+
+Use [source maps](http://www.html5rocks.com/en/tutorials/developertools/sourcemaps/). It can't be set up in `babel` settings.
+
+It also can be set up in your building tools setting. See [webpack](#webpack) config for example.
+
+### I always see runtime code while debugging, it's annoying
+
+Just blackbox runtime script in your browser, and you'll never see it again.
+
+![Blackbox runtime script](https://github.com/restrry/babel-plugin-source-wrapper/raw/master/blackbox.png)
+
+### When I get source location it point to library source by not my own
+
+Use [blackbox](#blackbox) setting to specify library files. Info info those files has lower priority and mostly overrides by info in your sources.
 
 ## License
 
