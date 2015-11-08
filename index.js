@@ -289,6 +289,9 @@ var createPluginFactory = function(options) {
                         if (path.node.callee.object &&
                             path.node.callee.object.name === 'require' &&
                             path.node.callee.property.name === 'ensure') {
+                            path.node.arguments.forEach(function(node) {
+                                path.scope.traverse(node, path.opts, path.state);
+                            });
                             return true;
                         }
 
@@ -296,6 +299,9 @@ var createPluginFactory = function(options) {
                         // TODO: find the way for safe wrapping
                         if (path.node.callee.type === 'Identifier' &&
                             path.node.callee.name === 'define') {
+                            path.node.arguments.forEach(function(node) {
+                                path.scope.traverse(node, path.opts, path.state);
+                            });
                             return true;
                         }
                     }

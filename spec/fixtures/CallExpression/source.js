@@ -8,13 +8,18 @@ var b = obj["getCtx"]();
 // shouldn't wrap require.ensure
 require.ensure(["module-a", "module-b"], function(require) {
   var a = require("module-a");
+  var b = [];
 });
 
 // shouldn't wrap define
 define(function(require) {
-  require("module-a");
+  var a = require("module-a");
+  var b = [];
 });
 
 define(["module-a", "module-b"], function(a, b) {
-  // ...
+  var c = [];
+  require.ensure([], function() {
+    var d = [];
+  });
 });
