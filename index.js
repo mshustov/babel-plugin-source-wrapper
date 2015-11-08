@@ -283,13 +283,21 @@ var createPluginFactory = function(options) {
                 },
 
                 shouldSkip: function(path) {
-                    // don't wrap arguments of `require.ensure` calls as webpack fails
-                    // TODO: find the way to safe wrapping
-                    if (path.node.type === 'CallExpression' &&
-                        path.node.callee.object &&
-                        path.node.callee.object.name === 'require' &&
-                        path.node.callee.property.name === 'ensure') {
-                        return true;
+                    if (path.node.type === 'CallExpression') {
+                        // don't wrap arguments of `require.ensure` calls as webpack fails
+                        // TODO: find the way for safe wrapping
+                        if (path.node.callee.object &&
+                            path.node.callee.object.name === 'require' &&
+                            path.node.callee.property.name === 'ensure') {
+                            return true;
+                        }
+
+                        // don't wrap arguments of `define` calls as webpack fails
+                        // TODO: find the way for safe wrapping
+                        if (path.node.callee.type === 'Identifier' &&
+                            path.node.callee.name === 'define') {
+                            return true;
+                        }
                     }
 
                     return path.node.skip_;
