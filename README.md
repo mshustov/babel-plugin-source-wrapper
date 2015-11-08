@@ -260,6 +260,10 @@ Just blackbox runtime script in your browser, and you'll never see it again.
 
 Use [blackbox](#blackbox) setting to specify library files. Info info those files has lower priority and mostly overrides by info in your sources.
 
+## Related projects
+
+- [component-inspector](https://github.com/lahmatiy/component-inspector)
+
 ## License
 
 MIT
