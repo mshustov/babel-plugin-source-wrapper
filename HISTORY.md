@@ -1,3 +1,7 @@
+## 1.2.2 (December 8, 2015)
+
+- FIX: Wrong processing of function and class declarations in `export` clause
+
 ## 1.2.1 (November 8, 2015)
 
 - FIX: Don't wrap arguments for `define()` (issue #10)
