@@ -3,3 +3,7 @@ var sum = function (a) {
         return a + b;
     }
 };
+
+export function declaration() {
+    return 1;
+}

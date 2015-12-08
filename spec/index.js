@@ -6,13 +6,15 @@ var babel = require('babel');
 var pluginPath = require.resolve('../index.js'); // ==> require
 
 var types = [
+    'ArrayExpression',
+    'CallExpression',
+    'ClassDeclaration',
+    'Complex',
+    'Decorator',
     'FunctionDeclaration',
     'FunctionExpression',
-    'ObjectExpression',
-    'CallExpression',
-    'Decorator',
-    'ArrayExpression',
-    'Complex'
+    'NewExpression',
+    'ObjectExpression'
 ];
 
 function normalizeFilename(filename) {
@@ -49,7 +51,7 @@ test('location wrapper', function(t) {
                 'registratorName': 'testWrapper'
             });
 
-            t.equal(expected, actual);
+            t.equal(expected.trim(), actual.trim());
             t.end();
         });
     });

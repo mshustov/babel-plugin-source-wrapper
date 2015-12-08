@@ -311,8 +311,13 @@ var createPluginFactory = function(options) {
 
                 FunctionDeclaration: function(node, parent, scope, file) {
                     var loc = getLocation(node);
-                    
-                    this.insertAfter(
+                    var insertPath = this;
+
+                    if (parent.type === 'ExportDefaultDeclaration' || parent.type === 'ExportNamedDeclaration') {
+                        insertPath = this.parentPath;
+                    }
+
+                    insertPath.insertAfter(
                         wrapNodeReference(loc, node)
                     );
                 },
@@ -340,8 +345,13 @@ var createPluginFactory = function(options) {
 
                     // if no decorators wrap class declaration reference
                     var loc = getLocation(node);
+                    var insertPath = this;
 
-                    this.insertAfter(
+                    if (parent.type === 'ExportDefaultDeclaration' || parent.type === 'ExportNamedDeclaration') {
+                        insertPath = this.parentPath;
+                    }
+
+                    insertPath.insertAfter(
                         wrapNodeReference(loc, node, 'class')
                     );
                 },
