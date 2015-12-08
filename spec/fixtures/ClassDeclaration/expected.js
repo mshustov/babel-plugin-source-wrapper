@@ -17,7 +17,7 @@ var Foo = function Foo() {
 };
 
 testWrapper(Foo, {
-    loc: "C:/git/babel-plugin-source-wrapper/spec/fixtures/ClassDeclaration/source.js:1:1:5:2",
+    loc: "{{path}}:1:1:5:2",
     type: "class"
 });
 
@@ -34,7 +34,7 @@ var Foo2 = (function (_Foo) {
 })(Foo);
 
 testWrapper(Foo2, {
-    loc: "C:/git/babel-plugin-source-wrapper/spec/fixtures/ClassDeclaration/source.js:7:1:11:2",
+    loc: "{{path}}:7:1:11:2",
     type: "class"
 });
 
@@ -46,7 +46,7 @@ var Bar = function Bar() {
 
 exports.Bar = Bar;
 testWrapper(Bar, {
-    loc: "C:/git/babel-plugin-source-wrapper/spec/fixtures/ClassDeclaration/source.js:13:8:17:2",
+    loc: "{{path}}:13:8:17:2",
     type: "class"
 });
 
@@ -64,6 +64,6 @@ var Bar2 = (function (_Bar) {
 
 exports.Bar2 = Bar2;
 testWrapper(Bar2, {
-    loc: "C:/git/babel-plugin-source-wrapper/spec/fixtures/ClassDeclaration/source.js:19:8:23:2",
+    loc: "{{path}}:19:8:23:2",
     type: "class"
 });
