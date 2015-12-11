@@ -97,7 +97,7 @@ var foo = $devinfo([], {
 });
 ```
 
-But if `basePath` is set to `'/Users/name/git/project'`, 
+But if `basePath` is set to `'/Users/name/git/project'`,
 
 ```js
 var foo = $devinfo([], {
@@ -169,6 +169,36 @@ module.exports = {
 };
 ```
 
+Configuring babel loader for webpack.
+
+```js
+var babelLoaderQuery = {
+    plugins: [
+        'react-display-name',
+        'source-wrapper'
+    ],
+    extra: {
+        'source-wrapper': {
+            // webpack sends absolute paths to plugins
+            // but we need paths relative to project root
+            basePath: process.cwd(),
+
+            // inject runtime in instrumented sources
+            runtime: true
+        }
+    }
+};
+
+module.exports = {
+    // ...
+
+    loaders: [{
+      test: /\.jsx$/,
+      loader: 'babel?' + JSON.stringify(babelLoaderQuery)
+    }],
+};
+```
+
 ### basisjs-tools
 
 You don't need use this plugin directly with `basisjs-tools`, just use [basisjs-tools-instrumenter](https://github.com/basisjs/basisjs-tools-instrumenter) that do all necessary job for you.
@@ -185,7 +215,7 @@ Plugin package contains simple implementation of runtime API. It could be inject
 
 ### Custom runtime API
 
-You could implement your own API version for instrumenting sources. 
+You could implement your own API version for instrumenting sources.
 
 API should be presented by function, that's also host for other functions (methods). This function should return `ref` value as is. Arguments:
 

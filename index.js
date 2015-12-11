@@ -2,7 +2,15 @@ var Minimatch = require('minimatch').Minimatch;
 var path = require('path');
 var runtimeScript = require('fs').readFileSync(__dirname + '/runtime.min.js', 'utf-8');
 
-var createPluginFactory = function(options) {
+
+var getOptionsFromFile = function(file) {
+  if (file.opts.extra && file.opts.extra['source-wrapper']) {
+    return file.opts.extra['source-wrapper'];
+  }
+}
+
+
+var normalizeOptions = function(options) {
     var registratorName = options.registratorName || '$devinfo';
     var runtime = '';
     var basePath = options.basePath || false;
@@ -30,6 +38,38 @@ var createPluginFactory = function(options) {
             return new Minimatch(str);
         });
     }
+
+    return {
+        registratorName: registratorName,
+        runtime: runtime,
+        blackbox: blackbox,
+        basePath: basePath
+    };
+};
+
+var createPluginFactory = function(options) {
+    var registratorName;
+    var runtime;
+    var basePath;
+    var blackbox;
+    var applyOptions;
+
+
+    applyOptions = function(options) {
+      if (!options) {
+        return;
+      }
+
+      options = normalizeOptions(options);
+
+      registratorName = options.registratorName;
+      runtime = options.runtime;
+      basePath = options.basePath;
+      blackbox = options.blackbox;
+
+      applyOptions = function() {};
+    }
+
 
     function isBlackboxFile(filename) {
         return blackbox && blackbox.some(function(mm) {
@@ -259,6 +299,9 @@ var createPluginFactory = function(options) {
             visitor: {
                 // init common things for all nodes
                 Program: function(node, parent, scope, file) {
+                    var fileOptions = getOptionsFromFile(file);
+                    applyOptions(fileOptions);
+
                     filename = 'unknown';
 
                     if (file.opts.filename) {
@@ -420,7 +463,7 @@ var createPluginFactory = function(options) {
     };
 };
 
-module.exports = createPluginFactory({});
+module.exports = createPluginFactory();
 module.exports.configure = function(options) {
-    return createPluginFactory(options || {});
+    return createPluginFactory(options);
 };
