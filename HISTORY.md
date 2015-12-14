@@ -1,3 +1,7 @@
+## 1.3 (December 14, 2015)
+
+– Allow configure the plugin when using as `Webpack` loader (thanks to @filipovskii)
+
 ## 1.2.2 (December 8, 2015)
 
 - FIX: Don't wrap arguments of `require.ensure()` and `define()` call expressions, but it's content (#11)
