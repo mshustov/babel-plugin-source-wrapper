@@ -7,8 +7,7 @@ var getOptionsFromFile = function(file) {
   if (file.opts.extra && file.opts.extra['source-wrapper']) {
     return file.opts.extra['source-wrapper'];
   }
-}
-
+};
 
 var normalizeOptions = function(options) {
     var registratorName = options.registratorName || '$devinfo';
@@ -54,22 +53,25 @@ var createPluginFactory = function(options) {
     var blackbox;
     var applyOptions;
 
+    saveOptions(options);
 
     applyOptions = function(options) {
       if (!options) {
         return;
       }
+      saveOptions(options);
 
+      applyOptions = function() {};
+    };
+
+    function saveOptions(options) {
       options = normalizeOptions(options);
 
       registratorName = options.registratorName;
       runtime = options.runtime;
       basePath = options.basePath;
       blackbox = options.blackbox;
-
-      applyOptions = function() {};
     }
-
 
     function isBlackboxFile(filename) {
         return blackbox && blackbox.some(function(mm) {
@@ -463,7 +465,7 @@ var createPluginFactory = function(options) {
     };
 };
 
-module.exports = createPluginFactory();
+module.exports = createPluginFactory({});
 module.exports.configure = function(options) {
     return createPluginFactory(options);
 };
