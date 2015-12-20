@@ -4,11 +4,10 @@ var runtimeScript = require('fs').readFileSync(__dirname + '/runtime.min.js', 'u
 
 
 var getOptionsFromFile = function(file) {
-  if (file.opts.extra && file.opts.extra['source-wrapper']) {
-    return file.opts.extra['source-wrapper'];
-  }
-}
-
+    if (file.opts.extra && file.opts.extra['source-wrapper']) {
+        return file.opts.extra['source-wrapper'];
+    }
+};
 
 var normalizeOptions = function(options) {
     var registratorName = options.registratorName || '$devinfo';
@@ -52,24 +51,20 @@ var createPluginFactory = function(options) {
     var runtime;
     var basePath;
     var blackbox;
-    var applyOptions;
+    var applyOptions = function(options) {
+        if (!options) {
+            return;
+        }
 
+        options = normalizeOptions(options);
 
-    applyOptions = function(options) {
-      if (!options) {
-        return;
-      }
+        registratorName = options.registratorName;
+        runtime = options.runtime;
+        basePath = options.basePath;
+        blackbox = options.blackbox;
 
-      options = normalizeOptions(options);
-
-      registratorName = options.registratorName;
-      runtime = options.runtime;
-      basePath = options.basePath;
-      blackbox = options.blackbox;
-
-      applyOptions = function() {};
-    }
-
+        applyOptions = function() {};
+    };
 
     function isBlackboxFile(filename) {
         return blackbox && blackbox.some(function(mm) {
@@ -299,8 +294,7 @@ var createPluginFactory = function(options) {
             visitor: {
                 // init common things for all nodes
                 Program: function(node, parent, scope, file) {
-                    var fileOptions = getOptionsFromFile(file);
-                    applyOptions(fileOptions);
+                    applyOptions(getOptionsFromFile(file) || options);
 
                     filename = 'unknown';
 
@@ -463,7 +457,7 @@ var createPluginFactory = function(options) {
     };
 };
 
-module.exports = createPluginFactory();
+module.exports = createPluginFactory({});
 module.exports.configure = function(options) {
-    return createPluginFactory(options);
+    return createPluginFactory(options || {});
 };
