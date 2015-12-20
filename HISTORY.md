@@ -1,3 +1,7 @@
+## 1.3.1 (December 20, 2015)
+
+- Fix regression with options processing
+
 ## 1.3 (December 14, 2015)
 
 – Allow configure the plugin when using as `Webpack` loader (thanks to @filipovskii)
