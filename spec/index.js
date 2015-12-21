@@ -5,18 +5,6 @@ var babel = require('babel');
 
 var pluginPath = require.resolve('../index.js'); // ==> require
 
-var types = [
-    'ArrayExpression',
-    'CallExpression',
-    'ClassDeclaration',
-    'Complex',
-    'Decorator',
-    'FunctionDeclaration',
-    'FunctionExpression',
-    'NewExpression',
-    'ObjectExpression'
-];
-
 function normalizeFilename(filename) {
     return path.normalize(filename).replace(/\\/g, '/');
 }
@@ -32,42 +20,65 @@ function processFile(sourcePath, options) {
     }).code;
 }
 
-function getExpected(expectedPath, sourcePath, registratorName) {
+function getExpected(expectedPath, sourcePath) {
     return fs.readFileSync(expectedPath, 'utf-8')
         .replace(/\{\{path\}\}/g, normalizeFilename(sourcePath))
-        .replace(new RegExp(registratorName + '(?!\\.)', 'g'), '(' + registratorName + ')')
         .replace(/\r/g, '')
         .trim();
 }
 
-test('location wrapper', function(t) {
-    types.forEach(function(type) {
-        test(type, function(t) {
-            var expectedPath = path.join(__dirname, 'fixtures', type, 'expected.js');
-            var sourcePath = path.join(__dirname, 'fixtures', type, 'source.js');
-
-            var expected = getExpected(expectedPath, sourcePath, 'testWrapper');
-            var actual = processFile(sourcePath, {
-                'registratorName': 'testWrapper'
-            });
-
-            t.equal(expected.trim(), actual.trim());
-            t.end();
-        });
-    });
-    t.end();
+var types = [
+    'ArrayExpression',
+    'CallExpression',
+    'ClassDeclaration',
+    'Complex',
+    'Decorator',
+    'FunctionDeclaration',
+    'FunctionExpression',
+    'NewExpression',
+    'ObjectExpression'
+].map(function(type){
+    return {
+        desc: 'type: ' + type,
+        fixture: type,
+        options: {
+            'registratorName': 'testWrapper'
+        }
+    };
 });
 
-test('Blackbox setter', function(t) {
-    var expectedPath = path.join(__dirname, 'fixtures', 'Blackbox', 'expected.js');
-    var sourcePath = path.join(__dirname, 'fixtures', 'Blackbox', 'source.js');
-
-    var expected = getExpected(expectedPath, sourcePath, 'testWrapper');
-    var actual = processFile(sourcePath, {
+var utilTests = [
+{
+    desc: 'Blackbox setter',
+    fixture: 'Blackbox',
+    options: {
         'registratorName': 'testWrapper',
         'blackbox': ['**/Blackbox/**']
-    });    
+    }
+},
+{
+    desc: 'Use default options',
+    fixture:'config/default',
+    options: {}
+},
+{
+    desc: 'Use options given via configure method',
+    fixture:'config/method',
+    options: {
+        'registratorName': 'testWrapper'
+    }
+}];
 
-    t.equal(expected, actual);
-    t.end();
+var tests = types.concat(utilTests);
+
+tests.forEach(function(config){
+    test(config.desc, function(t) {
+        var expectedPath = path.join(__dirname, 'fixtures', config.fixture, 'expected.js');
+        var sourcePath = path.join(__dirname, 'fixtures', config.fixture, 'source.js');
+
+        var expected = getExpected(expectedPath, sourcePath);
+        var actual = processFile(sourcePath, config.options);
+        t.equal(expected, actual);
+        t.end();
+    });
 });
