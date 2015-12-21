@@ -33,7 +33,7 @@ var Bar = (function () {
   }
 
   var _Bar = Bar;
-  Bar = testWrapper.wrapDecorator(decorator(testWrapper({ a: 1 }, {
+  Bar = testWrapper.wrapDecorator(decorator((testWrapper)({ a: 1 }, {
     loc: "{{path}}:4:12:4:20",
     map: {
       a: "{{path}}:4:17:4:18"
@@ -61,16 +61,16 @@ var Baz = (function () {
   _createDecoratedClass(Baz, [{
     key: "method",
     decorators: [decorator],
-    value: testWrapper(function () {}, {
+    value: (testWrapper)(function () {}, {
       loc: "{{path}}:13:9:13:14"
     })
   }]);
 
   var _Baz = Baz;
-  Baz = testWrapper.wrapDecorator(decorator(testWrapper(_createDecoratedObject([{
+  Baz = testWrapper.wrapDecorator(decorator((testWrapper)(_createDecoratedObject([{
     key: "method",
     decorators: [decorator],
-    value: testWrapper(function () {}, {
+    value: (testWrapper)(function () {}, {
       loc: "{{path}}:9:9:9:14"
     })
   }]), {

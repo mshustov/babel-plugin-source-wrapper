@@ -16,7 +16,7 @@ var Foo = function Foo() {
     this.foo = 123;
 };
 
-testWrapper(Foo, {
+(testWrapper)(Foo, {
     loc: "{{path}}:1:1:5:2",
     type: "class"
 });
@@ -33,7 +33,7 @@ var Foo2 = (function (_Foo) {
     return Foo2;
 })(Foo);
 
-testWrapper(Foo2, {
+(testWrapper)(Foo2, {
     loc: "{{path}}:7:1:11:2",
     type: "class"
 });
@@ -45,7 +45,7 @@ var Bar = function Bar() {
 };
 
 exports.Bar = Bar;
-testWrapper(Bar, {
+(testWrapper)(Bar, {
     loc: "{{path}}:13:8:17:2",
     type: "class"
 });
@@ -63,7 +63,7 @@ var Bar2 = (function (_Bar) {
 })(Bar);
 
 exports.Bar2 = Bar2;
-testWrapper(Bar2, {
+(testWrapper)(Bar2, {
     loc: "{{path}}:19:8:23:2",
     type: "class"
 });

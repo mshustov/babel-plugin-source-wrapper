@@ -1,8 +1,8 @@
 "use strict";
 
-var obj2 = testWrapper({
-    method: testWrapper(function c() {
-        return testWrapper(function d() {
+var obj2 = (testWrapper)({
+    method: (testWrapper)(function c() {
+        return (testWrapper)(function d() {
             return 14;
         }, {
             loc: "{{path}}:2:35:2:59"
@@ -17,6 +17,6 @@ var obj2 = testWrapper({
     }
 });
 
-testWrapper(obj2.method(), {
+(testWrapper)(obj2.method(), {
     loc: "{{path}}:5:1:5:14"
 });
