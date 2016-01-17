@@ -294,6 +294,10 @@ Use [blackbox](#blackbox) setting to specify library files. Info info those file
 
 - [component-inspector](https://github.com/lahmatiy/component-inspector)
 
+## Babel 6
+
+[experimental implementation](https://github.com/restrry/babel-plugin-source-wrapper/tree/babel6)
+
 ## License
 
 MIT
