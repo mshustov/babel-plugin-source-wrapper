@@ -45,3 +45,10 @@ define(["module-a", "module-b"], function (a, b) {
     });
   });
 });
+
+require.ensure([], function () {
+  require('./ensure');
+  var b = (testWrapper)([], {
+    loc: "{{path}}:29:13:29:15"
+  });
+}, 'test');

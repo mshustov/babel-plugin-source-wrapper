@@ -8,7 +8,7 @@ var getOptionsFromFile = function(file) {
     }
 };
 
-var VISITED_KEY = 'source-wrapper-' + Date.now();
+var SKIP_KEY = 'source-wrapper-' + Date.now();
 
 var normalizeOptions = function(options) {
     var registratorName = options.registratorName || '$devinfo';
@@ -179,7 +179,7 @@ var createPluginFactory = function(options) {
             }
 
             var wrapper = createRegistratorCall(args);
-            wrapper.shouldSkip = true;            
+            wrapper.shouldSkip = true;
             return wrapper;
         }
 
@@ -324,7 +324,7 @@ var createPluginFactory = function(options) {
                     }
 
                     if (loc) {
-                        insertPath.insertAfter(wrapNodeReference(loc, node));                
+                        insertPath.insertAfter(wrapNodeReference(loc, node));
                     }
                 },
 
@@ -366,27 +366,27 @@ var createPluginFactory = function(options) {
                 'FunctionExpression|ArrowFunctionExpression|ClassExpression|ArrayExpression|JSXElement': {
                     exit: function(path, file) {
                         // don't wrap class constructor as Babel fail on super call check
-                        if (path.node[VISITED_KEY]){
+                        if (path.node[SKIP_KEY]){
                             return;
                         }
 
-                        path.node[VISITED_KEY] = true;
+                        path.node[SKIP_KEY] = true;
 
                         var node = path.node;
                         var loc = getLocation(node); 
                         if (loc){
-                            path.replaceWith(wrapNode(loc, node));   
+                            path.replaceWith(wrapNode(loc, node));
                         }
                     }
                 },
 
                 NewExpression:  {
                     exit: function(path, file) {
-                        if (path.node[VISITED_KEY]){
+                        if (path.node[SKIP_KEY]){
                             return;
                         }
                         
-                        path.node[VISITED_KEY] = true;
+                        path.node[SKIP_KEY] = true;
                         
                         var node = path.node;
                         var loc = getLocation(node);
@@ -403,41 +403,43 @@ var createPluginFactory = function(options) {
                     exit: function(path, file) {
                         var node = path.node;
 
-                        if (node[VISITED_KEY]) {
+                        if (node[SKIP_KEY]) {
                             return;
                         };
 
-                        node[VISITED_KEY] = true;
+                        node[SKIP_KEY] = true;
 
                         var loc = getLocation(node);
                         if (loc) {
                             var map = path.getData('map');
                             path.replaceWith(wrapObjectNode(loc, node, map));
-                            path.skip();    
+                            path.skip();
                         }
                     }
                 },
 
                 CallExpression: {
                     enter: function(path, file) {
-                        // don't wrap arguments of `define` calls as webpack fails
+                        // in sake of webpack compatibility
+                        // don't wrap require.ensure and define instructions
+                        // and their child
                         // TODO: find the way for safe wrapping
-                        if (path.node.callee.object &&
+                        if(path.node.callee.object &&
                             path.node.callee.object.name === 'require' &&
                             path.node.callee.property.name === 'ensure' ||
                             t.isIdentifier(path.node.callee, { name: 'define' })
-                            ) {
-                            path.node.arguments.forEach(function(node) {
-                                path.scope.traverse(node, path.opts, path.state);
-                            });
-                            path.stop();
+                            ){
+                                path.node[SKIP_KEY] = true;
+                                path.node.arguments.forEach(function(node) {
+                                    node[SKIP_KEY] = true;
+                                });
                             return;
                         }
                     },
                     exit: function(path, file) {
                         var node = path.node;
 
-                        if (path.node[VISITED_KEY]) {
+                        if (path.node[SKIP_KEY]) {
                             return;
                         }
 
@@ -456,7 +458,7 @@ var createPluginFactory = function(options) {
                         if (t.isMemberExpression(node.callee) && !node.callee.computed) {
                             var loc = getLocation(node);
                             if (loc) {
-                                path.node[VISITED_KEY] = true;
+                                path.node[SKIP_KEY] = true;
                                 path.replaceWith(wrapNode(loc, node));
                             }
                         }
