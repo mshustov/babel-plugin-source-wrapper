@@ -35,7 +35,8 @@ var types = [
     'FunctionDeclaration',
     'FunctionExpression',
     'NewExpression',
-    'ObjectExpression'
+    'ObjectExpression',
+    'React'
 ].map(function(type){
     return {
         desc: 'type: ' + type,

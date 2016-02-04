@@ -97,6 +97,10 @@ var createPluginFactory = function(options) {
                 return calcLocation(filename, node.arguments[0]); // or get loc from node.arguments[1]... ?s
             }
 
+            if (t.isFunctionExpression(node) && !node.loc && node.body.loc) {
+                return calcLocation(filename, node.body); // only function body
+            }
+
             return null;
         }
 
