@@ -2,7 +2,7 @@
 [![Dependency Status](https://img.shields.io/david/restrry/babel-plugin-source-wrapper.svg)](https://david-dm.org/restrry/babel-plugin-source-wrapper)
 [![Build Status](https://travis-ci.org/restrry/babel-plugin-source-wrapper.svg?branch=master)](https://travis-ci.org/restrry/babel-plugin-source-wrapper)
 
-Babel plugin that source code instrumenting by wrapping code fragments by special functions. Those functions return wrapped value (result of expression evaluating) as is, but associate (attach) meta data to value. This data contains information about code fragment location and other details, that could be fetched by developers tools (for example [component-inspector](https://github.com/lahmatiy/component-inspector)).
+Babel plugin for code instrumenting by wrapping code fragments with special functions. Those functions return wrapped value (result of expression evaluating) as is, but associate (attach) meta data to value. This data contains information about code fragment location and other details, that could be fetched by developers tools (for example [component-inspector](https://github.com/lahmatiy/component-inspector)).
 
 ## Example of instrumenting
 

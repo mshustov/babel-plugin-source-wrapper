@@ -1,3 +1,7 @@
+## 1.3.2 (April 21, 2016)
+
+- Wrap all `CallExpression` and locate for method name instead entire expression
+
 ## 1.3.1 (December 20, 2015)
 
 - Fix regression with options processing
