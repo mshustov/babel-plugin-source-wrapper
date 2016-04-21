@@ -27,7 +27,9 @@ var Foo2 = (function (_Foo) {
     function Foo2() {
         _classCallCheck(this, Foo2);
 
-        _get(Object.getPrototypeOf(Foo2.prototype), "constructor", this).call(this);
+        (testWrapper)(_get(Object.getPrototypeOf(Foo2.prototype), "constructor", this).call(this), {
+            loc: "{{path}}:9:9:9:16"
+        });
     }
 
     return Foo2;
@@ -56,7 +58,9 @@ var Bar2 = (function (_Bar) {
     function Bar2() {
         _classCallCheck(this, Bar2);
 
-        _get(Object.getPrototypeOf(Bar2.prototype), "constructor", this).call(this);
+        (testWrapper)(_get(Object.getPrototypeOf(Bar2.prototype), "constructor", this).call(this), {
+            loc: "{{path}}:21:9:21:16"
+        });
     }
 
     return Bar2;

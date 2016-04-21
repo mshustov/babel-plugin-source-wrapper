@@ -428,11 +428,14 @@ var createPluginFactory = function(options) {
 
                 CallExpression: {
                     exit: function(node, parent, scope, file) {
-                        // TODO: add comment what is filtering here
-                        if (t.isMemberExpression(node.callee) && !node.callee.computed) {
-                            var loc = getLocation(node);
-                            return wrapNode(loc, node);
-                        }
+                        var isMemberExpression = t.isMemberExpression(node.callee);
+                        var loc = getLocation(!isMemberExpression || node.callee.computed ? node : {
+                            loc: {
+                                start: node.callee.property.loc.start,
+                                end: node.loc.end
+                            }
+                        });
+                        return wrapNode(loc, node);
                     }
                 },
 
