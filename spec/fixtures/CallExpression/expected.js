@@ -47,7 +47,9 @@ define(["module-a", "module-b"], function (a, b) {
 });
 
 require.ensure([], function () {
-  require('./ensure');
+  (testWrapper)(require('./ensure'), {
+    loc: "{{path}}:28:5:28:24"
+  });
   var b = (testWrapper)([], {
     loc: "{{path}}:29:13:29:15"
   });

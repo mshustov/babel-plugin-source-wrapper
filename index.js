@@ -89,18 +89,19 @@ var createPluginFactory = function(options) {
         var isBlackbox = false;
 
         function getLocation(node) {
-            if (node.loc) {
-                return calcLocation(filename, node);
-            }
+            if (node) {
+                if (node.loc) {
+                    return calcLocation(filename, node);
+                }
 
-            if (t.isCallExpression(node) && node.callee.name === registratorName) {
-                return calcLocation(filename, node.arguments[0]); // or get loc from node.arguments[1]... ?s
-            }
+                if (t.isCallExpression(node) && node.callee.name === registratorName) {
+                    return calcLocation(filename, node.arguments[0]); // or get loc from node.arguments[1]... ?s
+                }
 
-            if (t.isFunctionExpression(node) && !node.loc && node.body.loc) {
-                return calcLocation(filename, node.body); // only function body
+                if (t.isFunctionExpression(node) && !node.loc && node.body.loc) {
+                    return calcLocation(filename, node.body); // only function body
+                }
             }
-
             return null;
         }
 
@@ -447,24 +448,26 @@ var createPluginFactory = function(options) {
                             return;
                         }
 
-                        // exit: function(node, parent, scope, file) {
-                        //     var isMemberExpression = t.isMemberExpression(node.callee);
-                        //     var loc = getLocation(!isMemberExpression || node.callee.computed ? node : {
-                        //         loc: {
-                        //             start: node.callee.property.loc.start,
-                        //             end: node.loc.end
-                        //         }
-                        //     });
-                        //     return wrapNode(loc, node);
-                        // }
-
                         // TODO: add comment what is filtering here
-                        if (t.isMemberExpression(node.callee) && !node.callee.computed) {
-                            var loc = getLocation(node);
-                            if (loc) {
-                                path.node[SKIP_KEY] = true;
-                                path.replaceWith(wrapNode(loc, node));
+                        function getComputedLoc(node){
+                            if (node.callee.property.loc && node.loc){
+                                return {
+                                    loc: {
+                                        start: node.callee.property.loc.start,
+                                        end: node.loc.end
+                                    }
+                                }
                             }
+                        }
+
+                        var loc = getLocation(!t.isMemberExpression(node.callee) || node.callee.computed
+                                    ? node
+                                    : getComputedLoc(node)
+                                );
+
+                        if (loc) {
+                            path.node[SKIP_KEY] = true;
+                            path.replaceWith(wrapNode(loc, node));
                         }
                     }
                 }
