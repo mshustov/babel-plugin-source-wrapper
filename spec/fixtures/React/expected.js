@@ -34,6 +34,7 @@ var Bar2 = function (_Bar) {
   type: 'class'
 });
 
+
 var Bar = (testWrapper)({
   render: (testWrapper)(function render() {
     return 'hello';

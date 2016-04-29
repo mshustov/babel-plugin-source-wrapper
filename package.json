@@ -1,7 +1,7 @@
 {
   "name": "babel-plugin-source-wrapper",
   "description": "Babel plugin for code instrumenting to provide meta information for objects",
-  "version": "1.3.3",
+  "version": "2.0.0-alpha.3",
   "author": "Mikhail Shustov <restrry@gmail.com>",
   "contributors": [
     "Roman Dvornov <rdvornov@gmail.com>"
