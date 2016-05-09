@@ -75,4 +75,4 @@
     global[apiName] = api;
 })(window, typeof DEVINFO_API_NAME == 'string' ? DEVINFO_API_NAME : '$devinfo');
 
-//@ sourceURL=/babel-plugin-source-wrapper/runtime.js
+//# sourceURL=/babel-plugin-source-wrapper/runtime.js
