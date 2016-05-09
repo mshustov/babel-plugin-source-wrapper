@@ -1,3 +1,7 @@
+## 1.3.3 (May 9, 2016)
+
+- Fix `sourceURL` comment in runtime source
+
 ## 1.3.2 (April 21, 2016)
 
 - Wrap all `CallExpression` and locate for method name instead entire expression
