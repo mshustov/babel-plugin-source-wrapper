@@ -8,8 +8,6 @@ var getOptionsFromFile = function(file) {
     }
 };
 
-var SKIP_KEY = 'source-wrapper-' + Date.now();
-
 var normalizeOptions = function(options) {
     var registratorName = options.registratorName || '$devinfo';
     var runtime = '';
@@ -83,10 +81,32 @@ var createPluginFactory = function(options) {
         ].join(':');
     }
 
+    function getComputedLoc(node){
+        if (node.callee.property.loc && node.loc){
+            return {
+                loc: {
+                    start: node.callee.property.loc.start,
+                    end: node.loc.end
+                }
+            }
+        }
+    }
+
+    function extend(dest, source) {
+        for (var key in source) {
+            if (Object.prototype.hasOwnProperty.call(source, key)) {
+                dest[key] = source[key];
+            }
+        }
+
+        return dest;
+    }
+
     return function(_ref) {
         var t = _ref.types;
         var filename;
         var isBlackbox = false;
+        var shouldSkipNode = new WeakSet();
 
         function getLocation(node) {
             if (node) {
@@ -95,7 +115,7 @@ var createPluginFactory = function(options) {
                 }
 
                 if (t.isCallExpression(node) && node.callee.name === registratorName) {
-                    return calcLocation(filename, node.arguments[0]); // or get loc from node.arguments[1]... ?s
+                    return calcLocation(filename, node.arguments[0]); // or get loc from node.arguments[1]... ?
                 }
 
                 if (t.isFunctionExpression(node) && !node.loc && node.body.loc) {
@@ -103,16 +123,6 @@ var createPluginFactory = function(options) {
                 }
             }
             return null;
-        }
-
-        function extend(dest, source) {
-            for (var key in source) {
-                if (Object.prototype.hasOwnProperty.call(source, key)) {
-                    dest[key] = source[key];
-                }
-            }
-
-            return dest;
         }
 
         function simpleProperty(name, value) {
@@ -159,7 +169,7 @@ var createPluginFactory = function(options) {
         }
 
         function wrapNodeReference(loc, node, type) {
-            var wrapper = t.expressionStatement(
+            return t.expressionStatement(
                 createRegistratorCall([
                     t.identifier(node.id.name),
                     createInfoObject(
@@ -168,9 +178,6 @@ var createPluginFactory = function(options) {
                     )
                 ])
             );
-
-            wrapper.shouldSkip = true;
-            return wrapper;
         }
 
         function wrapNode(loc, node, force) {
@@ -183,13 +190,11 @@ var createPluginFactory = function(options) {
                 args.push(t.booleanLiteral(true));
             }
 
-            var wrapper = createRegistratorCall(args);
-            wrapper.shouldSkip = true;
-            return wrapper;
+            return createRegistratorCall(args);
         }
 
         function wrapObjectNode(loc, node, map) {
-            var wrapper = createRegistratorCall([
+            return createRegistratorCall([
                 node,
                 createInfoObject(loc, [
                     t.objectProperty(
@@ -198,8 +203,6 @@ var createPluginFactory = function(options) {
                     )
                 ])
             ]);
-            wrapper.shouldSkip = true;
-            return wrapper;
         }
 
         function buildMap(node) {
@@ -371,15 +374,14 @@ var createPluginFactory = function(options) {
                 'FunctionExpression|ArrowFunctionExpression|ClassExpression|ArrayExpression|JSXElement': {
                     exit: function(path, file) {
                         // don't wrap class constructor as Babel fail on super call check
-                        if (path.node[SKIP_KEY]){
+                        if (shouldSkipNode.has(path.node)){
                             return;
                         }
-
-                        path.node[SKIP_KEY] = true;
 
                         var node = path.node;
                         var loc = getLocation(node); 
                         if (loc){
+                            shouldSkipNode.add(node);
                             path.replaceWith(wrapNode(loc, node));
                         }
                     }
@@ -387,15 +389,14 @@ var createPluginFactory = function(options) {
 
                 NewExpression:  {
                     exit: function(path, file) {
-                        if (path.node[SKIP_KEY]){
+                        if (shouldSkipNode.has(path.node)){
                             return;
                         }
-                        
-                        path.node[SKIP_KEY] = true;
-                        
+
                         var node = path.node;
                         var loc = getLocation(node);
                         if (loc) {
+                            shouldSkipNode.add(node);
                             path.replaceWith(wrapNode(loc, node, true));
                         }
                     }
@@ -406,16 +407,14 @@ var createPluginFactory = function(options) {
                         path.setData('map', buildMap(path.node));
                     },
                     exit: function(path, file) {
-                        var node = path.node;
-
-                        if (node[SKIP_KEY]) {
+                        if (shouldSkipNode.has(path.node)){
                             return;
-                        };
+                        }
 
-                        node[SKIP_KEY] = true;
-
+                        var node = path.node;
                         var loc = getLocation(node);
                         if (loc) {
+                            shouldSkipNode.add(node);
                             var map = path.getData('map');
                             path.replaceWith(wrapObjectNode(loc, node, map));
                             path.skip();
@@ -429,44 +428,30 @@ var createPluginFactory = function(options) {
                         // don't wrap require.ensure and define instructions
                         // and their child
                         // TODO: find the way for safe wrapping
-                        if(path.node.callee.object &&
+                        if (path.node.callee.object &&
                             path.node.callee.object.name === 'require' &&
-                            path.node.callee.property.name === 'ensure' ||
-                            t.isIdentifier(path.node.callee, { name: 'define' })
-                            ){
-                                path.node[SKIP_KEY] = true;
-                                path.node.arguments.forEach(function(node) {
-                                    node[SKIP_KEY] = true;
-                                });
+                            path.node.callee.property.name === 'ensure' || t.isIdentifier(path.node.callee, { name: 'define' })) {
+
+                            shouldSkipNode.add(path.node);
+                            path.node.arguments.forEach(function(node) {
+                                shouldSkipNode.add(node);
+                            });
+
                             return;
                         }
                     },
                     exit: function(path, file) {
-                        var node = path.node;
-
-                        if (path.node[SKIP_KEY]) {
+                        if (shouldSkipNode.has(path.node)) {
                             return;
                         }
 
-                        // TODO: add comment what is filtering here
-                        function getComputedLoc(node){
-                            if (node.callee.property.loc && node.loc){
-                                return {
-                                    loc: {
-                                        start: node.callee.property.loc.start,
-                                        end: node.loc.end
-                                    }
-                                }
-                            }
-                        }
-
-                        var loc = getLocation(!t.isMemberExpression(node.callee) || node.callee.computed
-                                    ? node
-                                    : getComputedLoc(node)
-                                );
+                        var node = path.node;
+                        var loc = !t.isMemberExpression(node.callee) || node.callee.computed
+                            ? getLocation(node)
+                            : getLocation(getComputedLoc(node));
 
                         if (loc) {
-                            path.node[SKIP_KEY] = true;
+                            shouldSkipNode.add(node);
                             path.replaceWith(wrapNode(loc, node));
                         }
                     }
