@@ -72,6 +72,16 @@ var oddSquares = $devinfo($devinfo(array.map(square), {
 });
 ```
 
+Now you can get a meta-data by reference:
+
+```js
+console.log($devinfo.get(array));
+// > { loc: "path/to/filename.js:1:13:1:22" }
+
+console.log($devinfo.get(square));
+// > { loc: "path/to/filename.js:2:14:4:2" }
+```
+
 ## Install
 
 ```
