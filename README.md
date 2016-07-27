@@ -332,7 +332,9 @@ Use [blackbox](#blackbox) setting to specify library files. Info info those file
 
 ## Related projects
 
-- [component-inspector](https://github.com/lahmatiy/component-inspector)
+- [Component Inspector](https://github.com/lahmatiy/component-inspector) – developer tool to inspect components that can open component creation source location in editor. Has integrations for `React`, `Backbone` and can be adopted for other frameworks. Using meta-data provided by this plugin to show details about components.
+- [open-in-editor](https://github.com/lahmatiy/open-in-editor) – module to open file in editor by location reference.
+- [express-open-in-editor](https://github.com/lahmatiy/express-open-in-editor) – `Express` extension to open files from browser by GET request.
 
 ## License
 
