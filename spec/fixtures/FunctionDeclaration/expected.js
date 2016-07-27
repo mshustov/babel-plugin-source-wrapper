@@ -17,7 +17,6 @@ var sum = (testWrapper)(function (a) {
 function declaration() {
     return 1;
 }
-
 (testWrapper)(declaration, {
     loc: "{{path}}:7:8:9:2"
 });

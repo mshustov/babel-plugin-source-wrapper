@@ -9,9 +9,8 @@ var b = (testWrapper)(function () {
     loc: "{{path}}:1:9:1:30"
 });
 
-var expression = (testWrapper)(function () {
+var expression = exports.expression = (testWrapper)(function () {
     return 1;
 }, {
     loc: "{{path}}:3:25:5:2"
 });
-exports.expression = expression;

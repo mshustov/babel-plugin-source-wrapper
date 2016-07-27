@@ -3,12 +3,12 @@
 var obj = (testWrapper)({
     one: 1,
     two: 2,
-    getCtx: (testWrapper)(function () {
+    getCtx: (testWrapper)(function getCtx() {
         return this;
     }, {
         loc: "{{path}}:4:13:6:6"
     }),
-    getOne: (testWrapper)(function () {
+    getOne: (testWrapper)(function getOne() {
         return this.one;
     }, {
         loc: "{{path}}:7:13:9:6"

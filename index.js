@@ -1,7 +1,6 @@
 var Minimatch = require('minimatch').Minimatch;
-var path = require('path');
+var pathFS = require('path');
 var runtimeScript = require('fs').readFileSync(__dirname + '/runtime.min.js', 'utf-8');
-
 
 var getOptionsFromFile = function(file) {
     if (file.opts.extra && file.opts.extra['source-wrapper']) {
@@ -82,44 +81,54 @@ var createPluginFactory = function(options) {
         ].join(':');
     }
 
-    return function(_ref) {
-        var Plugin = _ref.Plugin;
-        var t = _ref.types;
-        var filename = 'unknown';
-        var isBlackbox = false;
+    function getComputedLoc(node){
+        if (node.callee.property.loc && node.loc){
+            return {
+                loc: {
+                    start: node.callee.property.loc.start,
+                    end: node.loc.end
+                }
+            }
+        }
+    }
 
-        if (!Plugin) {
-            console.warn('Usage `require("babel-plugin-source-wrapper")(options)` is deprecated, use `require("babel-plugin-source-wrapper").configure(options)` instead.');
-            return createPluginFactory(_ref);
+    function extend(dest, source) {
+        for (var key in source) {
+            if (Object.prototype.hasOwnProperty.call(source, key)) {
+                dest[key] = source[key];
+            }
         }
 
+        return dest;
+    }
+
+    return function(_ref) {
+        var t = _ref.types;
+        var filename;
+        var isBlackbox = false;
+        var shouldSkipNode = new WeakSet();
+
         function getLocation(node) {
-            if (node.loc) {
-                return calcLocation(filename, node);
-            }
+            if (node) {
+                if (node.loc) {
+                    return calcLocation(filename, node);
+                }
 
-            if (t.isCallExpression(node) && node.callee.name === registratorName) {
-                return calcLocation(filename, node.arguments[0]); // or get loc from node.arguments[1]... ?s
-            }
+                if (t.isCallExpression(node) && node.callee.name === registratorName) {
+                    return calcLocation(filename, node.arguments[0]); // or get loc from node.arguments[1]... ?
+                }
 
+                if (t.isFunctionExpression(node) && !node.loc && node.body.loc) {
+                    return calcLocation(filename, node.body); // only function body
+                }
+            }
             return null;
         }
 
-        function extend(dest, source) {
-            for (var key in source) {
-                if (Object.prototype.hasOwnProperty.call(source, key)) {
-                    dest[key] = source[key];
-                }
-            }
-
-            return dest;
-        }
-
         function simpleProperty(name, value) {
-            return t.property(
-                'init',
+            return t.objectProperty(
                 t.identifier(name),
-                t.literal(value)
+                value
             );
         }
 
@@ -143,14 +152,12 @@ var createPluginFactory = function(options) {
             var properties = [];
 
             if (loc) {
-                properties.push(
-                    simpleProperty('loc', loc)
-                );
+                properties.push(simpleProperty('loc', t.stringLiteral(loc)));
             }
 
             if (isBlackbox) {
                 properties.push(
-                    simpleProperty('blackbox', true)
+                    simpleProperty('blackbox', t.booleanLiteral(true))
                 );
             }
 
@@ -162,19 +169,15 @@ var createPluginFactory = function(options) {
         }
 
         function wrapNodeReference(loc, node, type) {
-            var wrapper = t.expressionStatement(
+            return t.expressionStatement(
                 createRegistratorCall([
                     t.identifier(node.id.name),
                     createInfoObject(
                         loc,
-                        type ? [simpleProperty('type', 'class')] : null
+                        type ? [simpleProperty('type',t.stringLiteral('class'))] : null
                     )
                 ])
             );
-
-            wrapper.skip_ = true;
-
-            return wrapper;
         }
 
         function wrapNode(loc, node, force) {
@@ -184,7 +187,7 @@ var createPluginFactory = function(options) {
             ];
 
             if (force) {
-                args.push(t.literal(true));
+                args.push(t.booleanLiteral(true));
             }
 
             return createRegistratorCall(args);
@@ -194,8 +197,7 @@ var createPluginFactory = function(options) {
             return createRegistratorCall([
                 node,
                 createInfoObject(loc, [
-                    t.property(
-                        'init',
+                    t.objectProperty(
                         t.identifier('map'),
                         t.objectExpression(map)
                     )
@@ -205,17 +207,17 @@ var createPluginFactory = function(options) {
 
         function buildMap(node) {
             return node.properties.reduce(function(result, property) {
-                if (!property.computed && property.kind == 'init') {
-                    var value = property.value;
+                var value = property.value;
+                if (!property.computed && value) {
                     var location = getLocation(value);
-
-                    result.push(
-                        t.property(
-                            'init',
-                            extend({}, property.key),
-                            t.literal(location)
-                        )
-                    );
+                    if (location) {
+                        result.push(
+                            t.objectProperty(
+                                extend({}, property.key),
+                                t.stringLiteral(location)
+                            )
+                        );
+                    }
                 }
 
                 return result;
@@ -249,8 +251,8 @@ var createPluginFactory = function(options) {
             return t.arrayExpression(decorators.map(function(decorator) {
                 var name = getDecoratorName(decorator);
                 var properties = [
-                    simpleProperty('loc', getLocation(decorator)),
-                    simpleProperty('name', name ? getDecoratorName(decorator, true) : 'unknown')
+                    simpleProperty('loc', t.stringLiteral(getLocation(decorator))),
+                    simpleProperty('name', t.stringLiteral(name ? getDecoratorName(decorator, true) : 'unknown'))
                 ];
 
                 if (name) {
@@ -271,8 +273,8 @@ var createPluginFactory = function(options) {
             var args = [
                 node.expression,
                 t.objectExpression([
-                    simpleProperty('index', index),
-                    simpleProperty('target', null)
+                    simpleProperty('index', t.stringLiteral(index)),
+                    simpleProperty('target', t.nullLiteral())
                 ])
             ];
 
@@ -289,19 +291,20 @@ var createPluginFactory = function(options) {
             );
         }
 
-        return new Plugin('babel-plugin-source-wrapper', {
-            metadata: { secondPass: false },
+        return {
             visitor: {
                 // init common things for all nodes
-                Program: function(node, parent, scope, file) {
-                    applyOptions(getOptionsFromFile(file) || options);
+                Program: function(path, data) {
+                    var node = path.node;
+                    var file = data.file;
+                    applyOptions(getOptionsFromFile(file) || data.opts);
 
                     filename = 'unknown';
 
                     if (file.opts.filename) {
                         filename = file.opts.filename;
                         if (basePath) {
-                            var relativePath = path.relative(basePath, file.opts.filename);
+                            var relativePath = pathFS.relative(basePath, file.opts.filename);
                             if (relativePath[0] != '.') {
                                 filename = '/' + relativePath;
                             }
@@ -309,7 +312,6 @@ var createPluginFactory = function(options) {
                     }
 
                     isBlackbox = isBlackboxFile(filename);
-
                     // inject runtime if necessary
                     // current implementation weird and actually a hack
                     // TODO: find correct way to this
@@ -319,51 +321,29 @@ var createPluginFactory = function(options) {
                     }
                 },
 
-                shouldSkip: function(path) {
-                    if (path.node.type === 'CallExpression') {
-                        // don't wrap arguments of `require.ensure` calls as webpack fails
-                        // TODO: find the way for safe wrapping
-                        if (path.node.callee.object &&
-                            path.node.callee.object.name === 'require' &&
-                            path.node.callee.property.name === 'ensure') {
-                            path.node.arguments.forEach(function(node) {
-                                path.scope.traverse(node, path.opts, path.state);
-                            });
-                            return true;
-                        }
-
-                        // don't wrap arguments of `define` calls as webpack fails
-                        // TODO: find the way for safe wrapping
-                        if (path.node.callee.type === 'Identifier' &&
-                            path.node.callee.name === 'define') {
-                            path.node.arguments.forEach(function(node) {
-                                path.scope.traverse(node, path.opts, path.state);
-                            });
-                            return true;
-                        }
-                    }
-
-                    return path.node.skip_;
-                },
-
-                FunctionDeclaration: function(node, parent, scope, file) {
+                FunctionDeclaration: function(path, file) {
+                    var node = path.node;
                     var loc = getLocation(node);
-                    var insertPath = this;
+                    var insertPath = path;
+                    var parent = path.parent;
 
-                    if (parent.type === 'ExportDefaultDeclaration' || parent.type === 'ExportNamedDeclaration') {
-                        insertPath = this.parentPath;
+                    if (t.isExportDefaultDeclaration(parent) || t.isExportNamedDeclaration(parent)) {
+                        insertPath = path.parentPath;
                     }
 
-                    insertPath.insertAfter(
-                        wrapNodeReference(loc, node)
-                    );
+                    if (loc) {
+                        insertPath.insertAfter(wrapNodeReference(loc, node));
+                    }
                 },
 
-                ClassDeclaration: function(node, parent, scope, file) {
+                ClassDeclaration: function(path, file) {
                     // don't wrap a class declaration with decorators, since
                     // it is unlikely that we will have the correct reference
                     // to the class; info will be attached in first applied
                     // decorator
+                    var node = path.node;
+                    var parent = path.parent;
+
                     if (node.decorators) {
                         var lastDecorator = node.decorators[node.decorators.length - 1];
                         lastDecorator.devClassInfo = createInfoObject(
@@ -382,85 +362,107 @@ var createPluginFactory = function(options) {
 
                     // if no decorators wrap class declaration reference
                     var loc = getLocation(node);
-                    var insertPath = this;
+                    var insertPath = path;
 
-                    if (parent.type === 'ExportDefaultDeclaration' || parent.type === 'ExportNamedDeclaration') {
-                        insertPath = this.parentPath;
+                    if (t.isExportDefaultDeclaration(parent) || t.isExportNamedDeclaration(parent)) {
+                        insertPath = path.parentPath;
                     }
 
-                    insertPath.insertAfter(
-                        wrapNodeReference(loc, node, 'class')
-                    );
+                    insertPath.insertAfter(wrapNodeReference(loc, node, 'class'));
                 },
 
                 'FunctionExpression|ArrowFunctionExpression|ClassExpression|ArrayExpression|JSXElement': {
-                    exit: function(node, parent, scope, file) {
+                    exit: function(path, file) {
                         // don't wrap class constructor as Babel fail on super call check
-                        if (parent.type == 'MethodDefinition' && parent.key.name == 'constructor') {
+                        if (shouldSkipNode.has(path.node)){
                             return;
                         }
 
-                        this.skip();
-                        var loc = getLocation(node);
-                        return wrapNode(loc, node);
+                        var node = path.node;
+                        var loc = getLocation(node); 
+                        if (loc){
+                            shouldSkipNode.add(node);
+                            path.replaceWith(wrapNode(loc, node));
+                        }
                     }
                 },
 
                 NewExpression:  {
-                    exit: function(node, parent, scope, file) {
-                        this.skip();
+                    exit: function(path, file) {
+                        if (shouldSkipNode.has(path.node)){
+                            return;
+                        }
+
+                        var node = path.node;
                         var loc = getLocation(node);
-                        return wrapNode(loc, node, true);
+                        if (loc) {
+                            shouldSkipNode.add(node);
+                            path.replaceWith(wrapNode(loc, node, true));
+                        }
                     }
                 },
 
                 ObjectExpression: {
-                    enter: function(node, parent, scope, file) {
-                        this.setData('map', buildMap(node));
+                    enter: function(path, file) {
+                        path.setData('map', buildMap(path.node));
                     },
-                    exit: function(node, parent, scope, file) {
-                        this.skip();
+                    exit: function(path, file) {
+                        if (shouldSkipNode.has(path.node)){
+                            return;
+                        }
+
+                        var node = path.node;
                         var loc = getLocation(node);
-                        var map = this.getData('map');
-                        return wrapObjectNode(loc, node, map);
+                        if (loc) {
+                            shouldSkipNode.add(node);
+                            var map = path.getData('map');
+                            path.replaceWith(wrapObjectNode(loc, node, map));
+                            path.skip();
+                        }
                     }
                 },
 
                 CallExpression: {
-                    exit: function(node, parent, scope, file) {
-                        var isMemberExpression = t.isMemberExpression(node.callee);
-                        var loc = getLocation(!isMemberExpression || node.callee.computed ? node : {
-                            loc: {
-                                start: node.callee.property.loc.start,
-                                end: node.loc.end
-                            }
-                        });
-                        return wrapNode(loc, node);
-                    }
-                },
+                    enter: function(path, file) {
+                        // in sake of webpack compatibility
+                        // don't wrap require.ensure and define instructions
+                        // and their child
+                        // TODO: find the way for safe wrapping
+                        if (path.node.callee.object &&
+                            path.node.callee.object.name === 'require' &&
+                            path.node.callee.property.name === 'ensure' || t.isIdentifier(path.node.callee, { name: 'define' })) {
 
-                Decorator: {
-                    exit: function(node, parent, scope, file) {
-                        // process class declaration decorators only
-                        if (parent.type != 'ClassDeclaration') {
+                            shouldSkipNode.add(path.node);
+                            path.node.arguments.forEach(function(node) {
+                                shouldSkipNode.add(node);
+                            });
+
+                            return;
+                        }
+                    },
+                    exit: function(path, file) {
+                        if (shouldSkipNode.has(path.node)) {
                             return;
                         }
 
-                        this.skip();
+                        var node = path.node;
+                        var loc = !t.isMemberExpression(node.callee) || node.callee.computed
+                            ? getLocation(node)
+                            : getLocation(getComputedLoc(node));
 
-                        var loc = getLocation(node);
-                        var decorators = parent.decorators;
-                        var index = decorators.indexOf(node);
-
-                        return wrapDecoratorNode(node, loc, index, node.devClassInfo);
+                        if (loc) {
+                            shouldSkipNode.add(node);
+                            path.replaceWith(wrapNode(loc, node));
+                        }
                     }
                 }
             }
-        });
+        };
     };
 };
 
 module.exports = createPluginFactory({});
+
 module.exports.configure = function(options) {
     return createPluginFactory(options || {});
 };

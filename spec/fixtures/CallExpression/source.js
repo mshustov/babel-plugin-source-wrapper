@@ -23,3 +23,8 @@ define(["module-a", "module-b"], function(a, b) {
     var d = [];
   });
 });
+
+require.ensure([], () => {
+    require('./ensure');
+    var b = [];
+}, 'test');

@@ -1,7 +1,7 @@
 var test = require('tape');
 var fs = require('fs');
 var path = require('path');
-var babel = require('babel');
+var babel = require('babel-core');
 
 var pluginPath = require.resolve('../index.js'); // ==> require
 
@@ -11,11 +11,10 @@ function normalizeFilename(filename) {
 
 function processFile(sourcePath, options) {
     return babel.transformFileSync(sourcePath, {
-        stage: 0,
+        presets: ['stage-0', 'es2015'],
         sourceMaps: true,
-        optional: ['runtime'],
         plugins: [
-            require(pluginPath).configure(options)
+            [require(pluginPath).configure(options), options]
         ]
     }).code;
 }
@@ -32,11 +31,12 @@ var types = [
     'CallExpression',
     'ClassDeclaration',
     'Complex',
-    'Decorator',
+    // 'Decorator',         babel 6.x haven't supported decorators yet
     'FunctionDeclaration',
     'FunctionExpression',
     'NewExpression',
-    'ObjectExpression'
+    'ObjectExpression',
+    'React'
 ].map(function(type){
     return {
         desc: 'type: ' + type,
@@ -47,8 +47,7 @@ var types = [
     };
 });
 
-var utilTests = [
-{
+var utilTests = [{
     desc: 'Blackbox setter',
     fixture: 'Blackbox',
     options: {
@@ -78,6 +77,7 @@ tests.forEach(function(config){
 
         var expected = getExpected(expectedPath, sourcePath);
         var actual = processFile(sourcePath, config.options);
+
         t.equal(expected, actual);
         t.end();
     });
