@@ -1,3 +1,7 @@
+## 2.0.0 (July 27, 2016)
+
+- Migrated to Babel 6
+
 ## 1.3.3 (May 9, 2016)
 
 - Fix `sourceURL` comment in runtime source

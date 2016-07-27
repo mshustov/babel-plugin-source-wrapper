@@ -4,7 +4,7 @@
 
 Babel plugin for code instrumenting by wrapping code fragments with special functions. Those functions return wrapped value (result of expression evaluating) as is, but associate (attach) meta-data to value. This data contains information about code fragment location and other details, that could be fetched by developer tools (for example [component-inspector](https://github.com/lahmatiy/component-inspector)).
 
-Babel 6 is supported. To use with Babel 5 use plugin version prior `2.0`.
+`Babel 6` is supported. To use with `Babel 5` use plugin version prior `2.0` (`^1.3.3`).
 
 <!-- MarkdownTOC -->
 
