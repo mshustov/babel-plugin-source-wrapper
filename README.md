@@ -2,9 +2,37 @@
 [![Dependency Status](https://img.shields.io/david/restrry/babel-plugin-source-wrapper.svg)](https://david-dm.org/restrry/babel-plugin-source-wrapper)
 [![Build Status](https://travis-ci.org/restrry/babel-plugin-source-wrapper.svg?branch=master)](https://travis-ci.org/restrry/babel-plugin-source-wrapper)
 
-Babel plugin for code instrumenting by wrapping code fragments with special functions. Those functions return wrapped value (result of expression evaluating) as is, but associate (attach) meta data to value. This data contains information about code fragment location and other details, that could be fetched by developers tools (for example [component-inspector](https://github.com/lahmatiy/component-inspector)).
+Babel plugin for code instrumenting by wrapping code fragments with special functions. Those functions return wrapped value (result of expression evaluating) as is, but associate (attach) meta-data to value. This data contains information about code fragment location and other details, that could be fetched by developer tools (for example [component-inspector](https://github.com/lahmatiy/component-inspector)).
 
-## Example of instrumenting
+Babel 6 is supported. To use with Babel 5 use plugin version prior `2.0`.
+
+<!-- MarkdownTOC -->
+
+- [Example](#example)
+- [Install](#install)
+- [Usage](#usage)
+    - [Options](#options)
+        - [registratorName](#registratorname)
+        - [blackbox](#blackbox)
+        - [basePath](#basepath)
+        - [runtime](#runtime)
+- [Using with build tools](#using-with-build-tools)
+    - [Webpack](#webpack)
+    - [basisjs-tools](#basisjs-tools)
+- [Runtime API](#runtime-api)
+    - [Custom runtime API](#custom-runtime-api)
+    - [Custom name of API \(wrapping function\)](#custom-name-of-api-wrapping-function)
+- [Meta-data](#meta-data)
+- [Problem solving](#problem-solving)
+    - [My source code became ugly, I can't read it anymore](#my-source-code-became-ugly-i-cant-read-it-anymore)
+    - [I always see runtime code while debugging, it's annoying](#i-always-see-runtime-code-while-debugging-its-annoying)
+    - [When I get source location it points to library source by not to my source](#when-i-get-source-location-it-points-to-library-source-by-not-to-my-source)
+- [Related projects](#related-projects)
+- [License](#license)
+
+<!-- /MarkdownTOC -->
+
+## Example
 
 Source:
 
@@ -207,7 +235,7 @@ You don't need use this plugin directly with `basisjs-tools`, just use [basisjs-
 
 Plugin package contains simple implementation of runtime API. It could be injected by plugin in every single instrumented source if `runtime` option is used. Or you can inject runtime once in your html file directly:
 
-```js
+```html
 <script src="node_modules/babel-plugin-source-wrapper/runtime.js"></script>
 ```
 
@@ -220,8 +248,8 @@ You could implement your own API version for instrumenting sources.
 API should be presented by function, that's also host for other functions (methods). This function should return `ref` value as is. Arguments:
 
 - `ref` - wrapped value (result of expression)
-- `data` - meta data, that could be attached to value
-- `force` - old meta data should be overrided by new one
+- `data` - meta-data, that could be attached to value
+- `force` - old meta-data should be overrided by new one
 
 Additional methods:
 
@@ -264,12 +292,12 @@ By default API name is `$devtools`. In case you need for another name there are 
 - use `registratorName` plugin option to set name for wrapping function
 - define global variable `DEVINFO_API_NAME` with desired name of API or replace it's occurences in source, to make known to other tools the correct name for API
 
-## Meta data
+## Meta-data
 
-Meta data could contains those properties:
+Meta-data could contains those properties:
 
 - `loc` (String) expression definition code fragment location, in format: `filename:startLine:startColumn:endLineEnd:endColumn`
-- `blackbox` (Boolean) means that data is from blackboxed files and has low priority. Any non-blackboxed meta data could override this data.
+- `blackbox` (Boolean) means that data is from blackboxed files and has low priority. Any non-blackboxed meta-data could override this data.
 - `map` (Object) if literal object is wrapped, this property contains locations for every single value.
 
 ## Problem solving
@@ -293,10 +321,6 @@ Use [blackbox](#blackbox) setting to specify library files. Info info those file
 ## Related projects
 
 - [component-inspector](https://github.com/lahmatiy/component-inspector)
-
-## Babel 6
-
-[experimental implementation](https://github.com/restrry/babel-plugin-source-wrapper/tree/babel6)
 
 ## License
 
