@@ -16,7 +16,7 @@
     "code"
   ],
   "dependencies": {
-    "minimatch": "^3.0.0"
+    "minimatch": "^3.0.2"
   },
   "devDependencies": {
     "babel": "^6.3.0",
