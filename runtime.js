@@ -26,7 +26,7 @@
         var map = new WeakMap();
 
         setter = function(ref, data, force) {
-            if (data && ref && (typeof ref === 'object' || typeof ref === 'function')) {
+            if (data && ref && ref instanceof Object) {
                 var curData = map.get(ref);
                 if (force || !curData || (curData.blackbox && !data.blackbox)) {
                     map.set(ref, data);
