@@ -14,7 +14,7 @@ var Bar2 = function (_Bar) {
   function Bar2() {
     _classCallCheck(this, Bar2);
 
-    return _possibleConstructorReturn(this, Object.getPrototypeOf(Bar2).apply(this, arguments));
+    return _possibleConstructorReturn(this, (Bar2.__proto__ || Object.getPrototypeOf(Bar2)).apply(this, arguments));
   }
 
   _createClass(Bar2, [{

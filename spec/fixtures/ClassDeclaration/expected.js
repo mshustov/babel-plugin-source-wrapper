@@ -28,7 +28,7 @@ var Foo2 = function (_Foo) {
     function Foo2() {
         _classCallCheck(this, Foo2);
 
-        return _possibleConstructorReturn(this, Object.getPrototypeOf(Foo2).call(this));
+        return _possibleConstructorReturn(this, (Foo2.__proto__ || Object.getPrototypeOf(Foo2)).call(this));
     }
 
     (testWrapper)(Foo2, {
@@ -59,7 +59,7 @@ var Bar2 = exports.Bar2 = function (_Bar) {
     function Bar2() {
         _classCallCheck(this, Bar2);
 
-        return _possibleConstructorReturn(this, Object.getPrototypeOf(Bar2).call(this));
+        return _possibleConstructorReturn(this, (Bar2.__proto__ || Object.getPrototypeOf(Bar2)).call(this));
     }
 
     (testWrapper)(Bar2, {
