@@ -31,6 +31,7 @@ var types = [
     'CallExpression',
     'ClassDeclaration',
     'Complex',
+    'ComputedProperty',
     // 'Decorator',         babel 6.x haven't supported decorators yet
     'FunctionDeclaration',
     'FunctionExpression',

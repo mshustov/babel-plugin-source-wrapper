@@ -417,7 +417,6 @@ var createPluginFactory = function(options) {
                             shouldSkipNode.add(node);
                             var map = path.getData('map');
                             path.replaceWith(wrapObjectNode(loc, node, map));
-                            path.skip();
                         }
                     }
                 },
