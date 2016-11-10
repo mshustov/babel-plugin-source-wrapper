@@ -1,3 +1,7 @@
+## 2.0.2 (November 10, 2016)
+
+- Fixed computed properties processing by `Babel` (#12)
+
 ## 2.0.1 (August 31, 2016)
 
 - More robust check of value for `WeakMap#set` since browsers sometimes produce objects that pass `typeof` check and not a `Object` intance that cause to exception
