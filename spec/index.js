@@ -45,7 +45,7 @@ var types = [
     'NewExpression',
     'ObjectExpression',
     'React',
-    'SourceMap'
+    'TypeScript'
 ].map(function(type){
     return {
         desc: 'type: ' + type,

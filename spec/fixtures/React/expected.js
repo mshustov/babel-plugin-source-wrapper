@@ -31,7 +31,10 @@ var Bar2 = function (_Bar) {
 
 (testWrapper)(Bar2, {
   loc: '{{path}}:1:1:5:2',
-  type: 'class'
+  type: 'class',
+  methods: {
+    render: '{{path}}:2:3:4:4'
+  }
 }, true);
 
 
