@@ -1,3 +1,4 @@
+var SourceMapConsumer = require('source-map').SourceMapConsumer;
 var Minimatch = require('minimatch').Minimatch;
 var pathFS = require('path');
 var runtimeScript = require('fs').readFileSync(__dirname + '/runtime.min.js', 'utf-8');
@@ -71,13 +72,41 @@ var createPluginFactory = function(options) {
         });
     }
 
-    function calcLocation(filename, node) {
+    function calcLocation(filename, sourceMap, node) {
+        var startPosition = {
+            line: node.loc.start.line,
+            column: node.loc.start.column + 1,
+        };
+        var endPosition = {
+            line: node.loc.end.line,
+            column: node.loc.end.column + 1,
+        };
+
+        if (sourceMap) {
+            var originalStartPosition = sourceMap.originalPositionFor(startPosition);
+            var originalEndPosition = sourceMap.originalPositionFor(endPosition);
+
+            if (typeof originalStartPosition.line === 'number' && typeof originalStartPosition.column === 'number') {
+                startPosition = {
+                    line: originalStartPosition.line,
+                    column: originalStartPosition.column + 1,
+                };
+            }
+
+            if (typeof originalEndPosition.line === 'number' && typeof originalEndPosition.column === 'number') {
+                endPosition = {
+                    line: originalEndPosition.line,
+                    column: originalEndPosition.column + 1,
+                };
+            }
+        }
+
         return [
             filename,
-            node.loc.start.line,
-            node.loc.start.column + 1,
-            node.loc.end.line,
-            node.loc.end.column + 1
+            startPosition.line,
+            startPosition.column,
+            endPosition.line,
+            endPosition.column
         ].join(':');
     }
 
@@ -105,21 +134,22 @@ var createPluginFactory = function(options) {
     return function(_ref) {
         var t = _ref.types;
         var filename;
+        var sourceMap;
         var isBlackbox = false;
         var shouldSkipNode = new WeakSet();
 
         function getLocation(node) {
             if (node) {
                 if (node.loc) {
-                    return calcLocation(filename, node);
+                    return calcLocation(filename, sourceMap, node);
                 }
 
                 if (t.isCallExpression(node) && node.callee.name === registratorName) {
-                    return calcLocation(filename, node.arguments[0]); // or get loc from node.arguments[1]... ?
+                    return calcLocation(filename, sourceMap, node.arguments[0]); // or get loc from node.arguments[1]... ?
                 }
 
                 if (t.isFunctionExpression(node) && !node.loc && node.body.loc) {
-                    return calcLocation(filename, node.body); // only function body
+                    return calcLocation(filename, sourceMap, node.body); // only function body
                 }
             }
             return null;
@@ -311,6 +341,10 @@ var createPluginFactory = function(options) {
                         }
                     }
 
+                    if (file.opts.inputSourceMap) {
+                        sourceMap = new SourceMapConsumer(file.opts.inputSourceMap);
+                    }
+
                     isBlackbox = isBlackboxFile(filename);
                     // inject runtime if necessary
                     // current implementation weird and actually a hack
@@ -379,7 +413,7 @@ var createPluginFactory = function(options) {
                         }
 
                         var node = path.node;
-                        var loc = getLocation(node); 
+                        var loc = getLocation(node);
                         if (loc){
                             shouldSkipNode.add(node);
                             path.replaceWith(wrapNode(loc, node));

@@ -9,10 +9,17 @@ function normalizeFilename(filename) {
     return path.normalize(filename).replace(/\\/g, '/');
 }
 
-function processFile(sourcePath, options) {
+function processFile(sourcePath, sourceMapPath, options) {
+    var inputSourceMap = null;
+
+    if (fs.existsSync(sourceMapPath)) {
+        inputSourceMap = JSON.parse(fs.readFileSync(sourceMapPath).toString());
+    }
+
     return babel.transformFileSync(sourcePath, {
         presets: ['stage-0', 'es2015'],
         sourceMaps: true,
+        inputSourceMap: inputSourceMap,
         plugins: [
             [require(pluginPath).configure(options), options]
         ]
@@ -37,7 +44,8 @@ var types = [
     'FunctionExpression',
     'NewExpression',
     'ObjectExpression',
-    'React'
+    'React',
+    'SourceMap'
 ].map(function(type){
     return {
         desc: 'type: ' + type,
@@ -75,9 +83,10 @@ tests.forEach(function(config){
     test(config.desc, function(t) {
         var expectedPath = path.join(__dirname, 'fixtures', config.fixture, 'expected.js');
         var sourcePath = path.join(__dirname, 'fixtures', config.fixture, 'source.js');
+        var sourceMapPath = path.join(__dirname, 'fixtures', config.fixture, 'source.js.map');
 
         var expected = getExpected(expectedPath, sourcePath);
-        var actual = processFile(sourcePath, config.options);
+        var actual = processFile(sourcePath, sourceMapPath, config.options);
 
         t.equal(expected, actual);
         t.end();
