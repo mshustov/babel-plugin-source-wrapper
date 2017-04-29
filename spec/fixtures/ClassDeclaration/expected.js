@@ -20,7 +20,7 @@ var Foo = (testWrapper)(function Foo() {
 (testWrapper)(Foo, {
     loc: "{{path}}:1:1:5:2",
     type: "class"
-});
+}, true);
 
 var Foo2 = function (_Foo) {
     _inherits(Foo2, _Foo);
@@ -40,7 +40,7 @@ var Foo2 = function (_Foo) {
 (testWrapper)(Foo2, {
     loc: "{{path}}:7:1:11:2",
     type: "class"
-});
+}, true);
 var Bar = exports.Bar = (testWrapper)(function Bar() {
     _classCallCheck(this, Bar);
 
@@ -51,7 +51,7 @@ var Bar = exports.Bar = (testWrapper)(function Bar() {
 (testWrapper)(Bar, {
     loc: "{{path}}:13:8:17:2",
     type: "class"
-});
+}, true);
 
 var Bar2 = exports.Bar2 = function (_Bar) {
     _inherits(Bar2, _Bar);
@@ -71,4 +71,4 @@ var Bar2 = exports.Bar2 = function (_Bar) {
 (testWrapper)(Bar2, {
     loc: "{{path}}:19:8:23:2",
     type: "class"
-});
+}, true);
