@@ -16,7 +16,8 @@
     "code"
   ],
   "dependencies": {
-    "minimatch": "^3.0.2"
+    "minimatch": "^3.0.2",
+    "source-map": "^0.5.6"
   },
   "devDependencies": {
     "babel": "^6.3.0",
