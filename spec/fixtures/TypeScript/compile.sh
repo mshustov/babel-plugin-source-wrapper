@@ -1,0 +1,1 @@
+tsc source.ts --sourceMap -t es2015 -m es2015

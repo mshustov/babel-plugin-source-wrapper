@@ -198,21 +198,42 @@ var createPluginFactory = function(options) {
             return t.objectExpression(properties);
         }
 
-        function wrapNodeReference(loc, node, type, force) {
-            var args = [
-                t.identifier(node.id.name),
-                createInfoObject(
-                    loc,
-                    type ? [simpleProperty('type',t.stringLiteral('class'))] : null
-                )
-            ];
+        function buildMethodObject(methods) {
+            return t.objectExpression(methods.reduce(function(properties, method) {
+                var loc = getLocation(method);
 
-            if (force) {
-                args.push(t.booleanLiteral(true));
-            }
+                if (loc) {
+                    properties.push(
+                        simpleProperty(method.key.name, t.stringLiteral(loc))
+                    );
+                }
 
+                return properties;
+            }, []));
+        }
+
+        function wrapClassDeclarationReference(loc, node, methods) {
             return t.expressionStatement(
-                createRegistratorCall(args)
+                createRegistratorCall([
+                    t.identifier(node.id.name),
+                    createInfoObject(loc, [
+                        simpleProperty('type', t.stringLiteral('class')),
+                        simpleProperty('methods', buildMethodObject(methods))
+                    ]),
+                    t.booleanLiteral(true)
+                ])
+            );
+        }
+
+        function wrapFunctionDeclarationReference(loc, node) {
+            return t.expressionStatement(
+                createRegistratorCall([
+                    t.identifier(node.id.name),
+                    createInfoObject(
+                        loc,
+                        null
+                    )
+                ])
             );
         }
 
@@ -372,7 +393,7 @@ var createPluginFactory = function(options) {
                     }
 
                     if (loc) {
-                        insertPath.insertAfter(wrapNodeReference(loc, node));
+                        insertPath.insertAfter(wrapFunctionDeclarationReference(loc, node));
                     }
                 },
 
@@ -408,7 +429,11 @@ var createPluginFactory = function(options) {
                         insertPath = path.parentPath;
                     }
 
-                    insertPath.insertAfter(wrapNodeReference(loc, node, 'class', true));
+                    var methods = node.body.body.filter(function(bodyNode) {
+                        return bodyNode.type === 'ClassMethod';
+                    });
+
+                    insertPath.insertAfter(wrapClassDeclarationReference(loc, node, methods));
                 },
 
                 'FunctionExpression|ArrowFunctionExpression|ClassExpression|ArrayExpression|JSXElement': {
