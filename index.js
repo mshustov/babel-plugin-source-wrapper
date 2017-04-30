@@ -198,15 +198,21 @@ var createPluginFactory = function(options) {
             return t.objectExpression(properties);
         }
 
-        function wrapNodeReference(loc, node, type) {
+        function wrapNodeReference(loc, node, type, force) {
+            var args = [
+                t.identifier(node.id.name),
+                createInfoObject(
+                    loc,
+                    type ? [simpleProperty('type',t.stringLiteral('class'))] : null
+                )
+            ];
+
+            if (force) {
+                args.push(t.booleanLiteral(true));
+            }
+
             return t.expressionStatement(
-                createRegistratorCall([
-                    t.identifier(node.id.name),
-                    createInfoObject(
-                        loc,
-                        type ? [simpleProperty('type',t.stringLiteral('class'))] : null
-                    )
-                ])
+                createRegistratorCall(args)
             );
         }
 
@@ -402,7 +408,7 @@ var createPluginFactory = function(options) {
                         insertPath = path.parentPath;
                     }
 
-                    insertPath.insertAfter(wrapNodeReference(loc, node, 'class'));
+                    insertPath.insertAfter(wrapNodeReference(loc, node, 'class', true));
                 },
 
                 'FunctionExpression|ArrowFunctionExpression|ClassExpression|ArrayExpression|JSXElement': {
