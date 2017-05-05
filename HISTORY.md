@@ -1,3 +1,9 @@
+## 2.1.0 (April 30, 2017)
+
+- Added input source map support (@vslinko, #20)
+- Added support for class method locations (@vslinko, #22)
+- Fixed class location overriding by its constructor method (@vslinko, #21)
+
 ## 2.0.2 (November 10, 2016)
 
 - Fixed computed properties processing by `Babel` (#12)
