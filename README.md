@@ -1,4 +1,4 @@
-#babel-plugin-source-wrapper
+# babel-plugin-source-wrapper
 
 [![NPM version](https://img.shields.io/npm/v/babel-plugin-source-wrapper.svg)](https://www.npmjs.com/package/babel-plugin-source-wrapper)
 [![Dependency Status](https://img.shields.io/david/restrry/babel-plugin-source-wrapper.svg)](https://david-dm.org/restrry/babel-plugin-source-wrapper)
