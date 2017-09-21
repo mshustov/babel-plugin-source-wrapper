@@ -46,7 +46,7 @@ var normalizeOptions = function(options) {
     };
 };
 
-var createPluginFactory = function(options) {
+var createPluginFactory = function(defaultOptions) {
     var registratorName;
     var runtime;
     var basePath;
@@ -56,6 +56,7 @@ var createPluginFactory = function(options) {
             return;
         }
 
+        options = extend(extend({}, defaultOptions), options);
         options = normalizeOptions(options);
 
         registratorName = options.registratorName;
