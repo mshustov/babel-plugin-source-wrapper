@@ -1,3 +1,7 @@
+## 2.1.1 (September 20, 2017)
+
+- Fixed `configure()` to use passed options as defaults (was broken in `2.0`)
+
 ## 2.1.0 (April 30, 2017)
 
 - Added input source map support (@vslinko, #20)
@@ -6,7 +10,7 @@
 
 ## 2.0.2 (November 10, 2016)
 
-- Fixed computed properties processing by `Babel` (#12)
+- Fixed computed properties processing by `Babel` (#19)
 
 ## 2.0.1 (August 31, 2016)
 
